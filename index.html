@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inversor Inteligente — Analizador de Pisos</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #F7F6F2;
+      --surface: #FFFFFF;
+      --surface2: #F0EEE8;
+      --border: #E2DDD5;
+      --border2: #C8C3B8;
+      --text: #1A1916;
+      --text2: #6B6760;
+      --text3: #9E9A94;
+      --green: #0F6E56;
+      --green-bg: #EAF3DE;
+      --green-mid: #1D9E75;
+      --blue: #185FA5;
+      --blue-bg: #E6F1FB;
+      --red: #A32D2D;
+      --red-bg: #FCEBEB;
+      --amber: #854F0B;
+      --amber-bg: #FAEEDA;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+    .logo span { color: var(--green-mid); }
+    .header-badge { font-size: 11px; background: var(--green-bg); color: var(--green); padding: 4px 10px; border-radius: 99px; font-weight: 500; }
+
+    /* LAYOUT */
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* TABS */
+    .tabs { display: flex; gap: 4px; background: var(--surface2); border-radius: var(--radius); padding: 4px; margin-bottom: 2rem; }
+    .tab { flex: 1; padding: 9px 16px; font-size: 14px; font-weight: 500; color: var(--text2); border: none; background: none; cursor: pointer; border-radius: var(--radius-sm); transition: all 0.15s; font-family: inherit; }
+    .tab:hover { background: var(--border); color: var(--text); }
+    .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+    /* SECTIONS */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* CARDS */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; }
+    .card-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
+
+    /* FORM */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 13px; color: var(--text2); font-weight: 500; }
+    .form-group input, .form-group select {
+      padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 14px; font-family: inherit; background: var(--surface); color: var(--text);
+      outline: none; transition: border-color 0.15s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--border2); }
+    .full-col { grid-column: 1 / -1; }
+
+    /* BUTTONS */
+    .btn { padding: 10px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; border: 1px solid transparent; transition: all 0.15s; }
+    .btn-primary { background: var(--text); color: #fff; }
+    .btn-primary:hover { background: #333; }
+    .btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
+    .btn-secondary:hover { background: var(--surface2); }
+    .btn-danger { background: none; border: 1px solid #E24B4A; color: var(--red); font-size: 12px; padding: 6px 12px; }
+    .btn-danger:hover { background: var(--red-bg); }
+    .btn-blue { background: var(--blue-bg); color: var(--blue); border-color: #B5D4F4; }
+    .btn-blue:hover { background: #d0e8f9; }
+    .btn-row { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; }
+
+    /* METRICS */
+    .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 1rem; }
+    .metric { background: var(--surface2); border-radius: var(--radius-sm); padding: 1rem; }
+    .metric-label { font-size: 11px; color: var(--text3); font-weight: 500; margin-bottom: 4px; }
+    .metric-value { font-size: 20px; font-weight: 600; color: var(--text); }
+
+    /* PISO CARDS */
+    .piso-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; transition: box-shadow 0.15s; }
+    .piso-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    .piso-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+    .piso-name { font-size: 16px; font-weight: 600; }
+    .piso-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+    .piso-mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .piso-mini { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px; }
+    .piso-mini-label { font-size: 11px; color: var(--text3); }
+    .piso-mini-val { font-size: 15px; font-weight: 600; margin-top: 2px; }
+
+    /* BADGES */
+    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px; margin-left: 8px; vertical-align: middle; }
+    .badge-green { background: var(--green-bg); color: var(--green); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber); }
+    .badge-red { background: var(--red-bg); color: var(--red); }
+    .badge-blue { background: var(--blue-bg); color: var(--blue); }
+
+    /* URL SECTION */
+    .url-box { background: var(--blue-bg); border: 1px solid #B5D4F4; border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+    .url-row { display: flex; gap: 8px; margin-top: 10px; }
+    .url-row input { flex: 1; }
+    .status-msg { font-size: 13px; margin-top: 8px; padding: 8px 12px; border-radius: var(--radius-sm); }
+    .status-ok { background: var(--green-bg); color: var(--green); }
+    .status-err { background: var(--red-bg); color: var(--red); }
+    .status-loading { background: var(--surface2); color: var(--text2); display: flex; align-items: center; gap: 8px; }
+
+    /* RANKING */
+    .ranking-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .ranking-item:last-child { border-bottom: none; }
+    .rank-num { width: 30px; height: 30px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: var(--text2); flex-shrink: 0; }
+    .rank-num.gold { background: var(--amber-bg); color: var(--amber); }
+    .rank-num.silver { background: var(--surface2); color: var(--text2); }
+    .rank-info { flex: 1; }
+    .rank-name { font-size: 14px; font-weight: 600; }
+    .rank-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
+    .score-wrap { text-align: right; min-width: 100px; }
+    .score-num { font-size: 16px; font-weight: 600; }
+    .score-bar-bg { height: 5px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-top: 5px; }
+    .score-bar { height: 100%; border-radius: 99px; }
+
+    /* DIVIDER */
+    .divider { height: 1px; background: var(--border); margin: 1rem 0; }
+
+    /* EMPTY STATE */
+    .empty { text-align: center; padding: 4rem 1rem; color: var(--text3); }
+    .empty-icon { font-size: 40px; margin-bottom: 1rem; }
+    .empty-title { font-size: 16px; font-weight: 600; color: var(--text2); margin-bottom: 4px; }
+
+    /* SPINNER */
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* API KEY BOX */
+    .apikey-box { background: var(--amber-bg); border: 1px solid #FAC775; border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 13px; }
+    .apikey-box strong { color: var(--amber); }
+
+    /* FOOTER */
+    footer { text-align: center; padding: 2rem; color: var(--text3); font-size: 12px; border-top: 1px solid var(--border); margin-top: 3rem; }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: repeat(2, 1fr); }
+      .piso-mini-grid { grid-template-columns: repeat(2, 1fr); }
+      header { padding: 0 1rem; }
+      .container { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Inversor<span>IA</span></div>
+  <div class="header-badge">Analizador de Pisos</div>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('perfil')">Mi perfil</button>
+    <button class="tab" onclick="switchTab('pisos')">Mis pisos</button>
+    <button class="tab" onclick="switchTab('ranking')">Ranking</button>
+    <button class="tab" onclick="switchTab('config')">Configuración</button>
+  </div>
+
+  <!-- ======= PERFIL ======= -->
+  <div id="tab-perfil" class="section active">
+    <div class="card">
+      <div class="card-title">Situación financiera</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Ahorros disponibles (€)</label><input type="number" id="ahorros" value="80000" oninput="savePerfil()"></div>
+        <div class="form-group"><label>Salario neto mensual (€)</label><input type="number" id="salario" value="3000" oninput="savePerfil()"></div>
+        <div class="form-group"><label>Otras deudas mensuales (€)</label><input type="number" id="deudas" value="0" oninput="savePerfil()"></div>
+        <div class="form-group"><label>Tipo marginal IRPF (%)</label><input type="number" id="irpf" value="30" oninput="savePerfil()"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Parámetros de hipoteca</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Entrada propia (%)</label><input type="number" id="entrada-pct" value="20" oninput="savePerfil()"></div>
+        <div class="form-group"><label>Tipo de interés (%)</label><input type="number" id="tipo-interes" value="3.5" step="0.1" oninput="savePerfil()"></div>
+        <div class="form-group"><label>Plazo hipoteca (años)</label><input type="number" id="plazo" value="25" oninput="savePerfil()"></div>
+        <div class="form-group"><label>Gastos de compra (%)</label><input type="number" id="gastos-compra" value="10" oninput="savePerfil()"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Parámetros de alquiler</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Vacío anual (meses)</label><input type="number" id="vacio" value="1" oninput="savePerfil()"></div>
+        <div class="form-group"><label>Mantenimiento anual (%)</label><input type="number" id="mantenimiento" value="1" step="0.1" oninput="savePerfil()"></div>
+        <div class="form-group"><label>IBI + comunidad/mes (€)</label><input type="number" id="ibi" value="100" oninput="savePerfil()"></div>
+        <div class="form-group"><label>Revalorización anual (%)</label><input type="number" id="revalorizacion" value="3" step="0.1" oninput="savePerfil()"></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="switchTab('pisos')">Guardar y añadir pisos →</button>
+    </div>
+  </div>
+
+  <!-- ======= PISOS ======= -->
+  <div id="tab-pisos" class="section">
+
+    <div class="url-box">
+      <div style="font-size:14px;font-weight:600;color:var(--blue)">Importar desde Idealista con IA</div>
+      <div style="font-size:13px;color:var(--blue);margin-top:4px;opacity:0.8">Pega la URL del anuncio y la IA extraerá los datos. Necesitas tu API key de Anthropic en Configuración.</div>
+      <div class="url-row">
+        <input type="text" id="piso-url-import" placeholder="https://www.idealista.com/inmueble/...">
+        <button class="btn btn-blue" onclick="extractFromUrl()" id="btn-extract">Extraer datos</button>
+      </div>
+      <div id="extract-status" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Añadir piso manualmente</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Nombre / referencia</label><input type="text" id="piso-nombre" placeholder="Piso Malasaña 3hab"></div>
+        <div class="form-group"><label>Barrio / zona</label><input type="text" id="piso-zona" placeholder="Malasaña, Madrid"></div>
+        <div class="form-group"><label>Precio de compra (€)</label><input type="number" id="piso-precio" placeholder="320000"></div>
+        <div class="form-group"><label>Metros cuadrados (m²)</label><input type="number" id="piso-metros" placeholder="75"></div>
+        <div class="form-group"><label>Habitaciones</label><input type="number" id="piso-habs" placeholder="3"></div>
+        <div class="form-group"><label>Alquiler estimado/mes (€)</label><input type="number" id="piso-alquiler" placeholder="1400"></div>
+        <div class="form-group"><label>Estado</label>
+          <select id="piso-estado">
+            <option value="buen-estado">Buen estado</option>
+            <option value="reformar">A reformar</option>
+            <option value="nuevo">Nuevo / obra nueva</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Coste reforma estimado (€)</label><input type="number" id="piso-reforma" value="0"></div>
+        <div class="form-group full-col"><label>URL Idealista (opcional)</label><input type="text" id="piso-url-manual" placeholder="https://www.idealista.com/inmueble/..."></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addPiso()">Añadir piso</button>
+        <button class="btn btn-secondary" onclick="clearForm()">Limpiar</button>
+      </div>
+    </div>
+
+    <div id="pisos-list"></div>
+  </div>
+
+  <!-- ======= RANKING ======= -->
+  <div id="tab-ranking" class="section">
+    <div id="ranking-content"></div>
+  </div>
+
+  <!-- ======= CONFIG ======= -->
+  <div id="tab-config" class="section">
+    <div class="card">
+      <div class="card-title">API Key de Anthropic</div>
+      <div class="apikey-box">
+        <strong>¿Cómo obtenerla?</strong> Regístrate en <a href="https://console.anthropic.com" target="_blank" style="color:var(--amber)">console.anthropic.com</a>, crea un proyecto y genera una API key. Los primeros usos son prácticamente gratuitos (céntimos por extracción).
+      </div>
+      <div class="form-group">
+        <label>Tu API Key (se guarda solo en tu navegador)</label>
+        <input type="password" id="api-key-input" placeholder="sk-ant-..." oninput="saveApiKey()">
+      </div>
+      <div id="api-key-status" style="margin-top:8px;font-size:13px;color:var(--text3)"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Datos guardados</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:1rem">Todos tus pisos y perfil se guardan automáticamente en este navegador (localStorage). No se envían a ningún servidor.</p>
+      <button class="btn btn-danger" onclick="clearAllData()">Borrar todos los datos</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  InversorIA · Analizador de rentabilidad inmobiliaria · Los cálculos son orientativos, no constituyen asesoramiento financiero.
+</footer>
+
+<script>
+  // ===== STATE =====
+  let perfil = { ahorros:80000,salario:3000,deudas:0,irpf:30,entradaPct:20,tipoInteres:3.5,plazo:25,gastosCompra:10,vacio:1,mantenimiento:1,ibi:100,revalorizacion:3 };
+  let pisos = [];
+  let apiKey = '';
+
+  // ===== PERSIST =====
+  function loadData() {
+    try {
+      const p = localStorage.getItem('inversoria_perfil');
+      const pi = localStorage.getItem('inversoria_pisos');
+      const k = localStorage.getItem('inversoria_apikey');
+      if (p) { perfil = JSON.parse(p); applyPerfilToForm(); }
+      if (pi) pisos = JSON.parse(pi);
+      if (k) { apiKey = k; document.getElementById('api-key-input').value = k; updateApiKeyStatus(); }
+    } catch(e) {}
+  }
+
+  function saveData() {
+    localStorage.setItem('inversoria_perfil', JSON.stringify(perfil));
+    localStorage.setItem('inversoria_pisos', JSON.stringify(pisos));
+  }
+
+  function saveApiKey() {
+    apiKey = document.getElementById('api-key-input').value.trim();
+    localStorage.setItem('inversoria_apikey', apiKey);
+    updateApiKeyStatus();
+  }
+
+  function updateApiKeyStatus() {
+    const el = document.getElementById('api-key-status');
+    if (apiKey && apiKey.startsWith('sk-ant-')) {
+      el.textContent = 'API key guardada correctamente.';
+      el.style.color = 'var(--green)';
+    } else if (apiKey) {
+      el.textContent = 'La clave no parece correcta (debe empezar por sk-ant-).';
+      el.style.color = 'var(--red)';
+    } else {
+      el.textContent = 'Sin API key. La extracción automática no estará disponible.';
+      el.style.color = 'var(--text3)';
+    }
+  }
+
+  function clearAllData() {
+    if (!confirm('¿Seguro que quieres borrar todos los pisos y tu perfil?')) return;
+    localStorage.clear();
+    pisos = [];
+    perfil = { ahorros:80000,salario:3000,deudas:0,irpf:30,entradaPct:20,tipoInteres:3.5,plazo:25,gastosCompra:10,vacio:1,mantenimiento:1,ibi:100,revalorizacion:3 };
+    applyPerfilToForm();
+    renderPisos();
+    alert('Datos borrados.');
+  }
+
+  function applyPerfilToForm() {
+    const fields = { ahorros:'ahorros',salario:'salario',deudas:'deudas',irpf:'irpf',entradaPct:'entrada-pct',tipoInteres:'tipo-interes',plazo:'plazo',gastosCompra:'gastos-compra',vacio:'vacio',mantenimiento:'mantenimiento',ibi:'ibi',revalorizacion:'revalorizacion' };
+    for (const [key, id] of Object.entries(fields)) {
+      const el = document.getElementById(id);
+      if (el) el.value = perfil[key];
+    }
+  }
+
+  function savePerfil() {
+    perfil = {
+      ahorros: +document.getElementById('ahorros').value||80000,
+      salario: +document.getElementById('salario').value||3000,
+      deudas: +document.getElementById('deudas').value||0,
+      irpf: +document.getElementById('irpf').value||30,
+      entradaPct: +document.getElementById('entrada-pct').value||20,
+      tipoInteres: +document.getElementById('tipo-interes').value||3.5,
+      plazo: +document.getElementById('plazo').value||25,
+      gastosCompra: +document.getElementById('gastos-compra').value||10,
+      vacio: +document.getElementById('vacio').value||1,
+      mantenimiento: +document.getElementById('mantenimiento').value||1,
+      ibi: +document.getElementById('ibi').value||100,
+      revalorizacion: +document.getElementById('revalorizacion').value||3
+    };
+    saveData();
+  }
+
+  // ===== CALCULOS =====
+  function calcularPiso(p) {
+    const precio = p.precio, reforma = p.reforma || 0;
+    const gastosCompra = precio * perfil.gastosCompra / 100;
+    const inversion = precio * (perfil.entradaPct / 100) + gastosCompra + reforma;
+    const capital = precio * (1 - perfil.entradaPct / 100);
+    const r = (perfil.tipoInteres / 100) / 12;
+    const n = perfil.plazo * 12;
+    const cuota = r > 0 ? capital * r * Math.pow(1+r,n) / (Math.pow(1+r,n)-1) : capital / n;
+    const alqBrutoAnual = p.alquiler * (12 - perfil.vacio);
+    const gastosAnuales = precio * perfil.mantenimiento / 100 + perfil.ibi * 12;
+    const alqNetoAnual = alqBrutoAnual - gastosAnuales;
+    const rentBruta = (alqBrutoAnual / precio) * 100;
+    const rentNeta = (alqNetoAnual / precio) * 100;
+    const cashflow = (p.alquiler * (12 - perfil.vacio) / 12) - cuota - perfil.ibi - (precio * perfil.mantenimiento / 100 / 12);
+    const revalAnual = precio * perfil.revalorizacion / 100;
+    const yoc = (alqNetoAnual / inversion) * 100;
+    const payback = inversion / (alqNetoAnual > 0 ? alqNetoAnual : 1);
+    let score = Math.min(rentNeta * 5, 40) + (cashflow > 0 ? Math.min(cashflow / 20, 30) : 0) + Math.min(perfil.revalorizacion * 3, 20) + (yoc > 5 ? 10 : yoc > 3 ? 5 : 0);
+    return { inversion, cuota, alqBrutoAnual, alqNetoAnual, rentBruta, rentNeta, cashflow, revalAnual, yoc, payback, score: Math.min(Math.round(score), 100) };
+  }
+
+  // ===== EXTRACT URL =====
+  async function extractFromUrl() {
+    const url = document.getElementById('piso-url-import').value.trim();
+    if (!url) { showStatus('Introduce una URL de Idealista.', 'err'); return; }
+    if (!apiKey || !apiKey.startsWith('sk-ant-')) {
+      showStatus('Necesitas configurar tu API key de Anthropic en la pestaña Configuración.', 'err');
+      return;
+    }
+    const btn = document.getElementById('btn-extract');
+    btn.disabled = true;
+    btn.textContent = 'Extrayendo...';
+    showStatus('<span class="spinner"></span> Analizando el anuncio con IA...', 'loading');
+
+    const prompt = `Analiza este anuncio inmobiliario: ${url}
+
+Busca la URL en la web y extrae los datos. Responde ÚNICAMENTE con un objeto JSON válido, sin markdown, sin explicaciones, sin texto adicional:
+{
+  "nombre": "descripción breve (ej: Piso 3hab Malasaña)",
+  "zona": "barrio y ciudad",
+  "precio": precio en euros como número entero,
+  "metros": metros útiles como número entero,
+  "habs": habitaciones como número entero,
+  "alquiler_estimado": estimación mensual de alquiler de mercado en euros como número entero,
+  "estado": "buen-estado" o "reformar" o "nuevo",
+  "reforma": coste estimado de reforma en euros como número entero o 0
+}`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('No se encontró JSON');
+      const d = JSON.parse(jsonMatch[0]);
+      document.getElementById('piso-nombre').value = d.nombre || '';
+      document.getElementById('piso-zona').value = d.zona || '';
+      document.getElementById('piso-precio').value = d.precio || '';
+      document.getElementById('piso-metros').value = d.metros || '';
+      document.getElementById('piso-habs').value = d.habs || '';
+      document.getElementById('piso-alquiler').value = d.alquiler_estimado || '';
+      document.getElementById('piso-estado').value = d.estado || 'buen-estado';
+      document.getElementById('piso-reforma').value = d.reforma || 0;
+      document.getElementById('piso-url-manual').value = url;
+      document.getElementById('piso-url-import').value = '';
+      showStatus('Datos extraídos correctamente. Revisa y ajusta si hace falta, luego pulsa Añadir piso.', 'ok');
+    } catch(e) {
+      showStatus('No se pudieron extraer los datos. Comprueba tu API key o rellena el formulario manualmente.', 'err');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Extraer datos';
+  }
+
+  function showStatus(msg, type) {
+    const el = document.getElementById('extract-status');
+    el.style.display = 'block';
+    el.className = 'status-msg status-' + type;
+    el.innerHTML = msg;
+  }
+
+  // ===== PISOS CRUD =====
+  function addPiso() {
+    const nombre = document.getElementById('piso-nombre').value.trim();
+    if (!nombre) { alert('Añade un nombre o referencia al piso.'); return; }
+    const precio = +document.getElementById('piso-precio').value;
+    if (!precio) { alert('Añade el precio de compra.'); return; }
+    const alquiler = +document.getElementById('piso-alquiler').value;
+    if (!alquiler) { alert('Añade el alquiler mensual estimado.'); return; }
+    pisos.push({
+      id: Date.now(),
+      nombre,
+      zona: document.getElementById('piso-zona').value,
+      precio,
+      metros: +document.getElementById('piso-metros').value || 1,
+      habs: +document.getElementById('piso-habs').value || 0,
+      alquiler,
+      estado: document.getElementById('piso-estado').value,
+      reforma: +document.getElementById('piso-reforma').value || 0,
+      url: document.getElementById('piso-url-manual').value
+    });
+    saveData();
+    clearForm();
+    document.getElementById('extract-status').style.display = 'none';
+    renderPisos();
+  }
+
+  function clearForm() {
+    ['piso-nombre','piso-zona','piso-precio','piso-metros','piso-habs','piso-alquiler','piso-url-manual','piso-url-import'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('piso-reforma').value = '0';
+    document.getElementById('piso-estado').value = 'buen-estado';
+  }
+
+  function deletePiso(id) {
+    if (!confirm('¿Eliminar este piso?')) return;
+    pisos = pisos.filter(p => p.id !== id);
+    saveData();
+    renderPisos();
+  }
+
+  // ===== RENDER =====
+  function fmt(n) { return Math.round(n).toLocaleString('es-ES'); }
+  function fmtD(n) { return (+n).toFixed(1); }
+  function scoreColor(s) { return s >= 70 ? 'var(--green)' : s >= 45 ? 'var(--blue)' : 'var(--red)'; }
+  function scoreBar(s) { return s >= 70 ? 'var(--green-mid)' : s >= 45 ? '#378ADD' : '#E24B4A'; }
+
+  function renderPisos() {
+    const el = document.getElementById('pisos-list');
+    if (!pisos.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">🏠</div><div class="empty-title">Aún no has añadido ningún piso</div><div>Usa la URL de Idealista o rellena el formulario manualmente.</div></div>`;
+      renderRanking(); return;
+    }
+    el.innerHTML = pisos.map(p => {
+      const c = calcularPiso(p);
+      const badge = c.score >= 70 ? '<span class="badge badge-green">Buena inversión</span>' : c.score >= 45 ? '<span class="badge badge-amber">Interesante</span>' : '<span class="badge badge-red">Revisar</span>';
+      return `<div class="piso-card">
+        <div class="piso-header">
+          <div>
+            <div class="piso-name">${p.nombre}${badge}</div>
+            <div class="piso-sub">${p.zona || ''} · ${p.habs} hab · ${p.metros} m² · ${fmt(p.precio / p.metros)} €/m²</div>
+          </div>
+          <button class="btn btn-danger" onclick="deletePiso(${p.id})">Eliminar</button>
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Precio compra</div><div class="metric-value">${fmt(p.precio)} €</div></div>
+          <div class="metric"><div class="metric-label">Inversión total</div><div class="metric-value" style="color:var(--blue)">${fmt(c.inversion)} €</div></div>
+          <div class="metric"><div class="metric-label">Cuota hipoteca</div><div class="metric-value">${fmt(c.cuota)} €/mes</div></div>
+          <div class="metric"><div class="metric-label">Score</div><div class="metric-value" style="color:${scoreColor(c.score)}">${c.score}/100</div></div>
+        </div>
+        <div class="divider"></div>
+        <div class="piso-mini-grid">
+          <div class="piso-mini"><div class="piso-mini-label">Rent. bruta</div><div class="piso-mini-val" style="color:var(--blue)">${fmtD(c.rentBruta)}%</div></div>
+          <div class="piso-mini"><div class="piso-mini-label">Rent. neta</div><div class="piso-mini-val" style="color:var(--blue)">${fmtD(c.rentNeta)}%</div></div>
+          <div class="piso-mini"><div class="piso-mini-label">Cashflow/mes</div><div class="piso-mini-val" style="color:${c.cashflow > 0 ? 'var(--green)' : 'var(--red)'}">${fmt(c.cashflow)} €</div></div>
+          <div class="piso-mini"><div class="piso-mini-label">YOC (sobre entrada)</div><div class="piso-mini-val" style="color:var(--blue)">${fmtD(c.yoc)}%</div></div>
+          <div class="piso-mini"><div class="piso-mini-label">Payback alquiler</div><div class="piso-mini-val">${Math.round(c.payback)} años</div></div>
+          <div class="piso-mini"><div class="piso-mini-label">Revalor. anual est.</div><div class="piso-mini-val" style="color:var(--green)">+${fmt(c.revalAnual)} €</div></div>
+        </div>
+        ${p.url ? `<div style="margin-top:1rem"><a href="${p.url}" target="_blank" style="font-size:13px;color:var(--blue)">Ver en Idealista →</a></div>` : ''}
+      </div>`;
+    }).join('');
+    renderRanking();
+  }
+
+  function renderRanking() {
+    const el = document.getElementById('ranking-content');
+    if (!pisos.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Sin pisos para rankear</div><div>Añade pisos en la pestaña "Mis pisos" para ver el ranking.</div></div>`;
+      return;
+    }
+    const ranked = [...pisos].map(p => ({ ...p, calc: calcularPiso(p) })).sort((a,b) => b.calc.score - a.calc.score);
+    const best = ranked[0], bC = best.calc;
+    el.innerHTML = `
+      <div class="metric-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:1.5rem">
+        <div class="metric"><div class="metric-label">Pisos analizados</div><div class="metric-value">${pisos.length}</div></div>
+        <div class="metric"><div class="metric-label">Mejor opción</div><div class="metric-value" style="font-size:16px;color:var(--green)">${best.nombre}</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Ranking por score de inversión</div>
+        ${ranked.map((p,i) => {
+          const c = p.calc;
+          return `<div class="ranking-item">
+            <div class="rank-num ${i===0?'gold':i===1?'silver':''}">${i+1}</div>
+            <div class="rank-info">
+              <div class="rank-name">${p.nombre}</div>
+              <div class="rank-sub">${p.zona||''} · Renta neta ${fmtD(c.rentNeta)}% · Cashflow ${fmt(c.cashflow)} €/mes</div>
+            </div>
+            <div class="score-wrap">
+              <div class="score-num" style="color:${scoreColor(c.score)}">${c.score}/100</div>
+              <div class="score-bar-bg"><div class="score-bar" style="width:${c.score}%;background:${scoreBar(c.score)}"></div></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">Detalle del mejor piso: ${best.nombre}</div>
+        <div class="piso-mini-grid" style="margin-bottom:1rem">
+          <div class="piso-mini"><div class="piso-mini-label">Inversión necesaria</div><div class="piso-mini-val">${fmt(bC.inversion)} €</div></div>
+          <div class="piso-mini"><div class="piso-mini-label">Rent. bruta</div><div class="piso-mini-val" style="color:var(--blue)">${fmtD(bC.rentBruta)}%</div></div>
+          <div class="piso-mini"><div class="piso-mini-label">Rent. neta</div><div class="piso-mini-val" style="color:var(--blue)">${fmtD(bC.rentNeta)}%</div></div>
+          <div class="piso-mini"><div class="piso-mini-label">Cashflow/mes</div><div class="piso-mini-val" style="color:${bC.cashflow>0?'var(--green)':'var(--red)'}">${fmt(bC.cashflow)} €</div></div>
+          <div class="piso-mini"><div class="piso-mini-label">Cuota hipoteca</div><div class="piso-mini-val">${fmt(bC.cuota)} €/mes</div></div>
+          <div class="piso-mini"><div class="piso-mini-label">Revalor. anual</div><div class="piso-mini-val" style="color:var(--green)">+${fmt(bC.revalAnual)} €</div></div>
+        </div>
+        ${best.url ? `<a href="${best.url}" target="_blank" class="btn btn-secondary" style="display:inline-block;text-decoration:none;font-size:13px">Ver en Idealista →</a>` : ''}
+      </div>`;
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['perfil','pisos','ranking','config'][i] === tab));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    if (tab === 'ranking') renderRanking();
+  }
+
+  // ===== INIT =====
+  loadData();
+  renderPisos();
+</script>
+</body>
+</html>
