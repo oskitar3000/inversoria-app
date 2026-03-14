@@ -3,606 +3,1163 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inversor Inteligente — Analizador de Pisos</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+  <title>InversorIA — Inversión inmobiliaria inteligente</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #F7F6F2;
-      --surface: #FFFFFF;
-      --surface2: #F0EEE8;
-      --border: #E2DDD5;
-      --border2: #C8C3B8;
-      --text: #1A1916;
-      --text2: #6B6760;
-      --text3: #9E9A94;
-      --green: #0F6E56;
-      --green-bg: #EAF3DE;
-      --green-mid: #1D9E75;
-      --blue: #185FA5;
-      --blue-bg: #E6F1FB;
-      --red: #A32D2D;
-      --red-bg: #FCEBEB;
-      --amber: #854F0B;
-      --amber-bg: #FAEEDA;
-      --radius: 12px;
-      --radius-sm: 8px;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --bg:#F6F4EF;--surface:#FFF;--surface2:#EFEDE7;
+      --border:#E0DDD6;--border2:#C5C1B8;
+      --text:#1A1916;--text2:#6B6760;--text3:#9E9A94;
+      --green:#0F6E56;--green-bg:#EAF3DE;--green-mid:#1D9E75;
+      --blue:#185FA5;--blue-bg:#E6F1FB;--blue-light:#B5D4F4;
+      --red:#A32D2D;--red-bg:#FCEBEB;
+      --amber:#854F0B;--amber-bg:#FAEEDA;--amber-light:#FAC775;
+      --radius:14px;--radius-sm:9px;
     }
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6;}
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      font-size: 15px;
-      line-height: 1.6;
-    }
+    header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;}
+    .logo{font-family:'DM Serif Display',serif;font-size:20px;letter-spacing:-0.02em;}
+    .logo span{color:var(--green-mid);}
+    .btn-reset{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:inherit;padding:4px 10px;border-radius:6px;}
+    .btn-reset:hover{background:var(--surface2);color:var(--text2);}
 
-    /* HEADER */
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 60px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .logo { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
-    .logo span { color: var(--green-mid); }
-    .header-badge { font-size: 11px; background: var(--green-bg); color: var(--green); padding: 4px 10px; border-radius: 99px; font-weight: 500; }
+    .container{max-width:740px;margin:0 auto;padding:2.5rem 1.5rem;}
 
-    /* LAYOUT */
-    .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    /* PROGRESS */
+    .progress-wrap{margin-bottom:2rem;}
+    .progress-steps{display:flex;gap:6px;margin-bottom:7px;}
+    .progress-step{flex:1;height:3px;background:var(--border);border-radius:99px;transition:background .3s;}
+    .progress-step.done{background:var(--green-mid);}
+    .progress-step.active{background:var(--green-mid);opacity:.5;}
+    .progress-labels{display:flex;justify-content:space-between;}
+    .progress-label{font-size:11px;color:var(--text3);font-weight:500;}
+    .progress-label.active{color:var(--green);}
 
-    /* TABS */
-    .tabs { display: flex; gap: 4px; background: var(--surface2); border-radius: var(--radius); padding: 4px; margin-bottom: 2rem; }
-    .tab { flex: 1; padding: 9px 16px; font-size: 14px; font-weight: 500; color: var(--text2); border: none; background: none; cursor: pointer; border-radius: var(--radius-sm); transition: all 0.15s; font-family: inherit; }
-    .tab:hover { background: var(--border); color: var(--text); }
-    .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    /* SCREENS */
+    .screen{display:none;animation:fadeIn .2s ease;}
+    .screen.active{display:block;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
 
-    /* SECTIONS */
-    .section { display: none; }
-    .section.active { display: block; }
+    .wizard-title{font-family:'DM Serif Display',serif;font-size:26px;letter-spacing:-.02em;margin-bottom:6px;line-height:1.2;}
+    .wizard-sub{font-size:14px;color:var(--text2);margin-bottom:1.5rem;}
 
-    /* CARDS */
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; }
-    .card-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
+    /* OPTION CARDS */
+    .option-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem;}
+    .option-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;cursor:pointer;transition:all .15s;user-select:none;}
+    .option-card:hover{border-color:var(--border2);background:var(--surface2);}
+    .option-card.selected{border-color:var(--green-mid);background:var(--green-bg);}
+    .option-card.selected .opt-title{color:var(--green);}
+    .opt-icon{font-size:20px;margin-bottom:5px;}
+    .opt-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;}
+    .opt-desc{font-size:12px;color:var(--text3);line-height:1.4;}
 
-    /* FORM */
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .form-group { display: flex; flex-direction: column; gap: 5px; }
-    .form-group label { font-size: 13px; color: var(--text2); font-weight: 500; }
-    .form-group input, .form-group select {
-      padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
-      font-size: 14px; font-family: inherit; background: var(--surface); color: var(--text);
-      outline: none; transition: border-color 0.15s;
-    }
-    .form-group input:focus, .form-group select:focus { border-color: var(--border2); }
-    .full-col { grid-column: 1 / -1; }
+    /* SLIDERS */
+    .slider-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:.75rem;}
+    .slider-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+    .slider-label{font-size:14px;font-weight:500;}
+    .slider-value{font-size:18px;font-weight:600;color:var(--green);}
+    input[type=range]{width:100%;accent-color:var(--green-mid);}
+
+    /* CAPACITY BOX */
+    .capacity-box{background:var(--green-bg);border:1px solid #9FE1CB;border-radius:var(--radius);padding:1.25rem;margin-bottom:1.5rem;}
+    .capacity-title{font-size:12px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;}
+    .capacity-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+    .cap-metric{background:#fff;border-radius:var(--radius-sm);padding:.75rem 1rem;}
+    .cap-label{font-size:11px;color:var(--text3);}
+    .cap-val{font-size:17px;font-weight:600;color:var(--green);margin-top:2px;}
+
+    /* FORMS */
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .form-group{display:flex;flex-direction:column;gap:5px;}
+    .form-group label{font-size:13px;color:var(--text2);font-weight:500;}
+    .form-group input,.form-group select{padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s;}
+    .form-group input:focus,.form-group select:focus{border-color:var(--green-mid);}
+    .full-col{grid-column:1/-1;}
+    .form-group textarea{padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;resize:vertical;transition:border-color .15s;}
+    .form-group textarea:focus{border-color:var(--green-mid);}
+    .section-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin:1.25rem 0 .75rem;}
+
+    /* CHECKBOXES GRID */
+    .check-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.5rem;}
+    .check-item{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;cursor:pointer;font-size:13px;transition:all .15s;}
+    .check-item:hover{border-color:var(--border2);}
+    .check-item.checked{border-color:var(--green-mid);background:var(--green-bg);color:var(--green);}
+    .check-item input[type=checkbox]{display:none;}
 
     /* BUTTONS */
-    .btn { padding: 10px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; border: 1px solid transparent; transition: all 0.15s; }
-    .btn-primary { background: var(--text); color: #fff; }
-    .btn-primary:hover { background: #333; }
-    .btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
-    .btn-secondary:hover { background: var(--surface2); }
-    .btn-danger { background: none; border: 1px solid #E24B4A; color: var(--red); font-size: 12px; padding: 6px 12px; }
-    .btn-danger:hover { background: var(--red-bg); }
-    .btn-blue { background: var(--blue-bg); color: var(--blue); border-color: #B5D4F4; }
-    .btn-blue:hover { background: #d0e8f9; }
-    .btn-row { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; }
+    .btn{padding:10px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;border:1.5px solid transparent;transition:all .15s;}
+    .btn-primary{background:var(--text);color:#fff;}
+    .btn-primary:hover{background:#2a2925;}
+    .btn-secondary{background:var(--surface);color:var(--text);border-color:var(--border);}
+    .btn-secondary:hover{background:var(--surface2);}
+    .btn-green{background:var(--green);color:#fff;}
+    .btn-green:hover{background:#0a5040;}
+    .btn-blue{background:var(--blue);color:#fff;font-size:13px;padding:9px 14px;}
+    .btn-blue:hover{background:#124d87;}
+    .btn-blue:disabled{background:var(--border2);cursor:not-allowed;}
+    .btn-danger{background:none;border:1px solid #E24B4A;color:var(--red);font-size:12px;padding:5px 10px;font-weight:500;}
+    .btn-danger:hover{background:var(--red-bg);}
+    .btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:1rem;}
 
-    /* METRICS */
-    .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 1rem; }
-    .metric { background: var(--surface2); border-radius: var(--radius-sm); padding: 1rem; }
-    .metric-label { font-size: 11px; color: var(--text3); font-weight: 500; margin-bottom: 4px; }
-    .metric-value { font-size: 20px; font-weight: 600; color: var(--text); }
+    /* ZONE CARDS */
+    .zone-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem;}
+    .zone-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.2rem;}
+    .zone-rank{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;}
+    .zone-rank.top{color:var(--green);}
+    .zone-rank.mid{color:var(--amber);}
+    .zone-name{font-size:16px;font-weight:600;margin-bottom:2px;}
+    .zone-city{font-size:12px;color:var(--text3);margin-bottom:7px;}
+    .zone-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+    .tag{font-size:11px;font-weight:500;padding:3px 8px;border-radius:99px;}
+    .tag-green{background:var(--green-bg);color:var(--green);}
+    .tag-blue{background:var(--blue-bg);color:var(--blue);}
+    .tag-amber{background:var(--amber-bg);color:var(--amber);}
+    .zone-metrics{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+    .zm{background:var(--surface2);border-radius:7px;padding:7px 9px;}
+    .zm-label{font-size:10px;color:var(--text3);}
+    .zm-val{font-size:13px;font-weight:600;margin-top:1px;}
+
+    /* APP TABS */
+    .tabs{display:flex;gap:4px;background:var(--surface2);border-radius:var(--radius);padding:4px;margin-bottom:1.5rem;}
+    .tab{flex:1;padding:8px 10px;font-size:13px;font-weight:500;color:var(--text2);border:none;background:none;cursor:pointer;border-radius:var(--radius-sm);transition:all .15s;font-family:inherit;}
+    .tab:hover{background:var(--border);color:var(--text);}
+    .tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+
+    /* CARDS */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1rem;}
+    .card-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1rem;}
+
+    /* URL BOX */
+    .url-box{background:var(--blue-bg);border:1px solid var(--blue-light);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;}
+    .url-row{display:flex;gap:8px;margin-top:8px;}
+    .url-row input{flex:1;padding:9px 12px;border:1px solid var(--blue-light);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;}
+    .url-row input:focus{border-color:var(--blue);}
+    .status-msg{font-size:13px;margin-top:8px;padding:8px 12px;border-radius:var(--radius-sm);}
+    .status-ok{background:var(--green-bg);color:var(--green);}
+    .status-err{background:var(--red-bg);color:var(--red);}
+    .status-loading{background:var(--surface2);color:var(--text2);display:flex;align-items:center;gap:8px;}
 
     /* PISO CARDS */
-    .piso-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; transition: box-shadow 0.15s; }
-    .piso-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
-    .piso-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
-    .piso-name { font-size: 16px; font-weight: 600; }
-    .piso-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
-    .piso-mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .piso-mini { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px; }
-    .piso-mini-label { font-size: 11px; color: var(--text3); }
-    .piso-mini-val { font-size: 15px; font-weight: 600; margin-top: 2px; }
+    .metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:1rem;}
+    .metric{background:var(--surface2);border-radius:var(--radius-sm);padding:.875rem;}
+    .metric-label{font-size:11px;color:var(--text3);font-weight:500;margin-bottom:3px;}
+    .metric-value{font-size:18px;font-weight:600;}
+    .piso-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1rem;transition:box-shadow .15s;}
+    .piso-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.06);}
+    .piso-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;}
+    .piso-name{font-size:16px;font-weight:600;}
+    .piso-sub{font-size:13px;color:var(--text2);margin-top:2px;}
+    .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+    .mini{background:var(--surface2);border-radius:var(--radius-sm);padding:9px 11px;}
+    .mini-label{font-size:11px;color:var(--text3);}
+    .mini-val{font-size:14px;font-weight:600;margin-top:2px;}
+    .badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;margin-left:8px;vertical-align:middle;}
+    .badge-green{background:var(--green-bg);color:var(--green);}
+    .badge-amber{background:var(--amber-bg);color:var(--amber);}
+    .badge-red{background:var(--red-bg);color:var(--red);}
+    .divider{height:1px;background:var(--border);margin:.875rem 0;}
+    .piso-features{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.75rem;}
+    .feat-tag{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
+    .feat-tag.positive{background:var(--green-bg);color:var(--green);border-color:#9FE1CB;}
+    .feat-tag.negative{background:var(--red-bg);color:var(--red);border-color:#F7C1C1;}
 
-    /* BADGES */
-    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px; margin-left: 8px; vertical-align: middle; }
-    .badge-green { background: var(--green-bg); color: var(--green); }
-    .badge-amber { background: var(--amber-bg); color: var(--amber); }
-    .badge-red { background: var(--red-bg); color: var(--red); }
-    .badge-blue { background: var(--blue-bg); color: var(--blue); }
-
-    /* URL SECTION */
-    .url-box { background: var(--blue-bg); border: 1px solid #B5D4F4; border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
-    .url-row { display: flex; gap: 8px; margin-top: 10px; }
-    .url-row input { flex: 1; }
-    .status-msg { font-size: 13px; margin-top: 8px; padding: 8px 12px; border-radius: var(--radius-sm); }
-    .status-ok { background: var(--green-bg); color: var(--green); }
-    .status-err { background: var(--red-bg); color: var(--red); }
-    .status-loading { background: var(--surface2); color: var(--text2); display: flex; align-items: center; gap: 8px; }
+    .alquiler-est{background:var(--blue-bg);border:1px solid var(--blue-light);border-radius:var(--radius-sm);padding:.75rem 1rem;margin-bottom:.875rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+    .alquiler-est-label{font-size:12px;color:var(--blue);font-weight:500;}
+    .alquiler-est-val{font-size:18px;font-weight:600;color:var(--blue);}
 
     /* RANKING */
-    .ranking-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
-    .ranking-item:last-child { border-bottom: none; }
-    .rank-num { width: 30px; height: 30px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: var(--text2); flex-shrink: 0; }
-    .rank-num.gold { background: var(--amber-bg); color: var(--amber); }
-    .rank-num.silver { background: var(--surface2); color: var(--text2); }
-    .rank-info { flex: 1; }
-    .rank-name { font-size: 14px; font-weight: 600; }
-    .rank-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
-    .score-wrap { text-align: right; min-width: 100px; }
-    .score-num { font-size: 16px; font-weight: 600; }
-    .score-bar-bg { height: 5px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-top: 5px; }
-    .score-bar { height: 100%; border-radius: 99px; }
+    .ranking-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+    .ranking-item:last-child{border-bottom:none;}
+    .rank-num{width:28px;height:28px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--text2);flex-shrink:0;}
+    .rank-num.gold{background:var(--amber-bg);color:var(--amber);}
+    .rank-info{flex:1;}
+    .rank-name{font-size:14px;font-weight:600;}
+    .rank-sub{font-size:12px;color:var(--text2);margin-top:1px;}
+    .score-wrap{text-align:right;min-width:85px;}
+    .score-num{font-size:15px;font-weight:600;}
+    .score-bar-bg{height:4px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-top:4px;}
+    .score-bar{height:100%;border-radius:99px;}
 
-    /* DIVIDER */
-    .divider { height: 1px; background: var(--border); margin: 1rem 0; }
+    .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .perfil-bar{background:var(--green-bg);border:1px solid #9FE1CB;border-radius:var(--radius);padding:.875rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+    .perfil-bar-text{font-size:13px;color:var(--green);font-weight:500;}
+    .info-box{background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1rem;font-size:13px;color:var(--amber);line-height:1.6;}
+    .empty{text-align:center;padding:3rem 1rem;color:var(--text3);}
+    .empty-icon{font-size:36px;margin-bottom:.75rem;}
+    .empty-title{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:4px;}
+    footer{text-align:center;padding:2rem;color:var(--text3);font-size:12px;border-top:1px solid var(--border);margin-top:3rem;}
 
-    /* EMPTY STATE */
-    .empty { text-align: center; padding: 4rem 1rem; color: var(--text3); }
-    .empty-icon { font-size: 40px; margin-bottom: 1rem; }
-    .empty-title { font-size: 16px; font-weight: 600; color: var(--text2); margin-bottom: 4px; }
-
-    /* SPINNER */
-    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* API KEY BOX */
-    .apikey-box { background: var(--amber-bg); border: 1px solid #FAC775; border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 13px; }
-    .apikey-box strong { color: var(--amber); }
-
-    /* FOOTER */
-    footer { text-align: center; padding: 2rem; color: var(--text3); font-size: 12px; border-top: 1px solid var(--border); margin-top: 3rem; }
-
-    @media (max-width: 600px) {
-      .form-grid { grid-template-columns: 1fr; }
-      .metric-grid { grid-template-columns: repeat(2, 1fr); }
-      .piso-mini-grid { grid-template-columns: repeat(2, 1fr); }
-      header { padding: 0 1rem; }
-      .container { padding: 1rem; }
+    @media(max-width:580px){
+      .option-grid,.zone-grid,.form-grid,.metric-grid,.capacity-grid{grid-template-columns:1fr;}
+      .mini-grid{grid-template-columns:1fr 1fr;}
+      .check-grid{grid-template-columns:1fr 1fr;}
+      header{padding:0 1rem;}
+      .container{padding:1.5rem 1rem;}
+      .wizard-title{font-size:22px;}
     }
   </style>
 </head>
 <body>
-
 <header>
   <div class="logo">Inversor<span>IA</span></div>
-  <div class="header-badge">Analizador de Pisos</div>
+  <button class="btn-reset" onclick="resetApp()">↺ Reiniciar</button>
 </header>
 
 <div class="container">
 
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('perfil')">Mi perfil</button>
-    <button class="tab" onclick="switchTab('pisos')">Mis pisos</button>
-    <button class="tab" onclick="switchTab('ranking')">Ranking</button>
-    <button class="tab" onclick="switchTab('config')">Configuración</button>
-  </div>
-
-  <!-- ======= PERFIL ======= -->
-  <div id="tab-perfil" class="section active">
-    <div class="card">
-      <div class="card-title">Situación financiera</div>
-      <div class="form-grid">
-        <div class="form-group"><label>Ahorros disponibles (€)</label><input type="number" id="ahorros" value="80000" oninput="savePerfil()"></div>
-        <div class="form-group"><label>Salario neto mensual (€)</label><input type="number" id="salario" value="3000" oninput="savePerfil()"></div>
-        <div class="form-group"><label>Otras deudas mensuales (€)</label><input type="number" id="deudas" value="0" oninput="savePerfil()"></div>
-        <div class="form-group"><label>Tipo marginal IRPF (%)</label><input type="number" id="irpf" value="30" oninput="savePerfil()"></div>
-      </div>
+  <!-- PROGRESS -->
+  <div class="progress-wrap" id="progress-wrap">
+    <div class="progress-steps">
+      <div class="progress-step" id="ps-1"></div>
+      <div class="progress-step" id="ps-2"></div>
+      <div class="progress-step" id="ps-3"></div>
+      <div class="progress-step" id="ps-4"></div>
     </div>
-    <div class="card">
-      <div class="card-title">Parámetros de hipoteca</div>
-      <div class="form-grid">
-        <div class="form-group"><label>Entrada propia (%)</label><input type="number" id="entrada-pct" value="20" oninput="savePerfil()"></div>
-        <div class="form-group"><label>Tipo de interés (%)</label><input type="number" id="tipo-interes" value="3.5" step="0.1" oninput="savePerfil()"></div>
-        <div class="form-group"><label>Plazo hipoteca (años)</label><input type="number" id="plazo" value="25" oninput="savePerfil()"></div>
-        <div class="form-group"><label>Gastos de compra (%)</label><input type="number" id="gastos-compra" value="10" oninput="savePerfil()"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Parámetros de alquiler</div>
-      <div class="form-grid">
-        <div class="form-group"><label>Vacío anual (meses)</label><input type="number" id="vacio" value="1" oninput="savePerfil()"></div>
-        <div class="form-group"><label>Mantenimiento anual (%)</label><input type="number" id="mantenimiento" value="1" step="0.1" oninput="savePerfil()"></div>
-        <div class="form-group"><label>IBI + comunidad/mes (€)</label><input type="number" id="ibi" value="100" oninput="savePerfil()"></div>
-        <div class="form-group"><label>Revalorización anual (%)</label><input type="number" id="revalorizacion" value="3" step="0.1" oninput="savePerfil()"></div>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="switchTab('pisos')">Guardar y añadir pisos →</button>
+    <div class="progress-labels">
+      <span class="progress-label" id="pl-1">Capacidad</span>
+      <span class="progress-label" id="pl-2">Perfil</span>
+      <span class="progress-label" id="pl-3">Estrategia</span>
+      <span class="progress-label" id="pl-4">Zonas</span>
     </div>
   </div>
 
-  <!-- ======= PISOS ======= -->
-  <div id="tab-pisos" class="section">
+  <!-- ===== PASO 1: CAPACIDAD FINANCIERA ===== -->
+  <div class="screen active" id="screen-1">
+    <div class="wizard-title">Tu capacidad de inversión</div>
+    <div class="wizard-sub">Calculamos cuánto puedes pagar por un piso y qué hipoteca puedes asumir.</div>
 
-    <div class="url-box">
-      <div style="font-size:14px;font-weight:600;color:var(--blue)">Importar desde Idealista con IA</div>
-      <div style="font-size:13px;color:var(--blue);margin-top:4px;opacity:0.8">Pega la URL del anuncio y la IA extraerá los datos. Necesitas tu API key de Anthropic en Configuración.</div>
-      <div class="url-row">
-        <input type="text" id="piso-url-import" placeholder="https://www.idealista.com/inmueble/...">
-        <button class="btn btn-blue" onclick="extractFromUrl()" id="btn-extract">Extraer datos</button>
-      </div>
-      <div id="extract-status" style="display:none"></div>
+    <div class="slider-group">
+      <div class="slider-header"><span class="slider-label">Ahorros disponibles para invertir</span><span class="slider-value" id="val-ahorros">80.000 €</span></div>
+      <input type="range" min="20000" max="600000" step="5000" value="80000" id="sl-ahorros" oninput="recalcCapacity()">
+    </div>
+    <div class="slider-group">
+      <div class="slider-header"><span class="slider-label">Salario neto mensual</span><span class="slider-value" id="val-salario">3.000 €/mes</span></div>
+      <input type="range" min="1000" max="12000" step="100" value="3000" id="sl-salario" oninput="recalcCapacity()">
+    </div>
+    <div class="slider-group">
+      <div class="slider-header"><span class="slider-label">Deudas mensuales actuales (hipoteca, préstamos...)</span><span class="slider-value" id="val-deudas">0 €/mes</span></div>
+      <input type="range" min="0" max="3000" step="50" value="0" id="sl-deudas" oninput="recalcCapacity()">
     </div>
 
-    <div class="card">
-      <div class="card-title">Añadir piso manualmente</div>
-      <div class="form-grid">
-        <div class="form-group"><label>Nombre / referencia</label><input type="text" id="piso-nombre" placeholder="Piso Malasaña 3hab"></div>
-        <div class="form-group"><label>Barrio / zona</label><input type="text" id="piso-zona" placeholder="Malasaña, Madrid"></div>
-        <div class="form-group"><label>Precio de compra (€)</label><input type="number" id="piso-precio" placeholder="320000"></div>
-        <div class="form-group"><label>Metros cuadrados (m²)</label><input type="number" id="piso-metros" placeholder="75"></div>
-        <div class="form-group"><label>Habitaciones</label><input type="number" id="piso-habs" placeholder="3"></div>
-        <div class="form-group"><label>Alquiler estimado/mes (€)</label><input type="number" id="piso-alquiler" placeholder="1400"></div>
-        <div class="form-group"><label>Estado</label>
-          <select id="piso-estado">
-            <option value="buen-estado">Buen estado</option>
-            <option value="reformar">A reformar</option>
-            <option value="nuevo">Nuevo / obra nueva</option>
-          </select>
-        </div>
-        <div class="form-group"><label>Coste reforma estimado (€)</label><input type="number" id="piso-reforma" value="0"></div>
-        <div class="form-group full-col"><label>URL Idealista (opcional)</label><input type="text" id="piso-url-manual" placeholder="https://www.idealista.com/inmueble/..."></div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="addPiso()">Añadir piso</button>
-        <button class="btn btn-secondary" onclick="clearForm()">Limpiar</button>
-      </div>
-    </div>
-
-    <div id="pisos-list"></div>
-  </div>
-
-  <!-- ======= RANKING ======= -->
-  <div id="tab-ranking" class="section">
-    <div id="ranking-content"></div>
-  </div>
-
-  <!-- ======= CONFIG ======= -->
-  <div id="tab-config" class="section">
-    <div class="card">
-      <div class="card-title">API Key de Anthropic</div>
-      <div class="apikey-box">
-        <strong>¿Cómo obtenerla?</strong> Regístrate en <a href="https://console.anthropic.com" target="_blank" style="color:var(--amber)">console.anthropic.com</a>, crea un proyecto y genera una API key. Los primeros usos son prácticamente gratuitos (céntimos por extracción).
+    <div class="form-grid" style="margin-bottom:1rem">
+      <div class="form-group">
+        <label>Entrada disponible (%)</label>
+        <select id="entrada-pct" onchange="recalcCapacity()">
+          <option value="20">20% (mínimo habitual)</option>
+          <option value="25">25%</option>
+          <option value="30">30%</option>
+          <option value="40">40%</option>
+          <option value="100">100% sin hipoteca</option>
+        </select>
       </div>
       <div class="form-group">
-        <label>Tu API Key (se guarda solo en tu navegador)</label>
-        <input type="password" id="api-key-input" placeholder="sk-ant-..." oninput="saveApiKey()">
+        <label>Tipo interés hipoteca estimado (%)</label>
+        <select id="tipo-interes" onchange="recalcCapacity()">
+          <option value="3">3% (variable bajo)</option>
+          <option value="3.5" selected>3.5% (fijo actual)</option>
+          <option value="4">4%</option>
+          <option value="4.5">4.5%</option>
+        </select>
       </div>
-      <div id="api-key-status" style="margin-top:8px;font-size:13px;color:var(--text3)"></div>
+      <div class="form-group">
+        <label>Plazo hipoteca (años)</label>
+        <select id="plazo" onchange="recalcCapacity()">
+          <option value="20">20 años</option>
+          <option value="25" selected>25 años</option>
+          <option value="30">30 años</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tipo marginal IRPF</label>
+        <select id="irpf">
+          <option value="19">19%</option>
+          <option value="24">24%</option>
+          <option value="30" selected>30%</option>
+          <option value="37">37%</option>
+          <option value="45">45%</option>
+        </select>
+      </div>
     </div>
-    <div class="card">
-      <div class="card-title">Datos guardados</div>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:1rem">Todos tus pisos y perfil se guardan automáticamente en este navegador (localStorage). No se envían a ningún servidor.</p>
-      <button class="btn btn-danger" onclick="clearAllData()">Borrar todos los datos</button>
+
+    <!-- CAPACITY RESULT BOX -->
+    <div class="capacity-box" id="capacity-box">
+      <div class="capacity-title">Tu capacidad de compra</div>
+      <div class="capacity-grid">
+        <div class="cap-metric"><div class="cap-label">Precio máximo del piso</div><div class="cap-val" id="cap-precio-max">—</div></div>
+        <div class="cap-metric"><div class="cap-label">Cuota hipoteca máx.</div><div class="cap-val" id="cap-cuota-max">—</div></div>
+        <div class="cap-metric"><div class="cap-label">Dinero restante tras compra</div><div class="cap-val" id="cap-restante">—</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--green);margin-top:.75rem;opacity:.8" id="cap-note"></div>
+    </div>
+
+    <div class="btn-row"><button class="btn btn-primary" onclick="goToScreen(2)">Continuar →</button></div>
+  </div>
+
+  <!-- ===== PASO 2: PERFIL INVERSOR ===== -->
+  <div class="screen" id="screen-2">
+    <div class="wizard-title">¿Qué tipo de inversor eres?</div>
+    <div class="wizard-sub">Selecciona todas las estrategias que te interesan.</div>
+    <div class="option-grid" id="tipo-grid">
+      <div class="option-card" data-val="larga-estancia" onclick="toggleMulti(this)"><div class="opt-icon">🏠</div><div class="opt-title">Alquiler larga estancia</div><div class="opt-desc">Inquilinos estables, ingresos predecibles.</div></div>
+      <div class="option-card" data-val="airbnb" onclick="toggleMulti(this)"><div class="opt-icon">✈️</div><div class="opt-title">Airbnb / vacacional</div><div class="opt-desc">Mayor rentabilidad, más gestión.</div></div>
+      <div class="option-card" data-val="flipping" onclick="toggleMulti(this)"><div class="opt-icon">🔨</div><div class="opt-title">Comprar y reformar</div><div class="opt-desc">Comprar barato, reformar y vender.</div></div>
+      <div class="option-card" data-val="habitaciones" onclick="toggleMulti(this)"><div class="opt-icon">🚪</div><div class="opt-title">Alquiler por habitaciones</div><div class="opt-desc">Alta rentabilidad cerca de universidades.</div></div>
+    </div>
+    <div class="wizard-title" style="font-size:19px;margin-bottom:5px">Dedicación</div>
+    <div class="option-grid" id="dedicacion-grid">
+      <div class="option-card" data-val="minima" onclick="selectSingle(this,'dedicacion')"><div class="opt-icon">😌</div><div class="opt-title">Mínima</div><div class="opt-desc">Quiero que funcione solo.</div></div>
+      <div class="option-card" data-val="moderada" onclick="selectSingle(this,'dedicacion')"><div class="opt-icon">⚖️</div><div class="opt-title">Moderada</div><div class="opt-desc">Gestiono algunas cosas.</div></div>
+      <div class="option-card" data-val="activa" onclick="selectSingle(this,'dedicacion')"><div class="opt-icon">💪</div><div class="opt-title">Activo</div><div class="opt-desc">Me implico al máximo.</div></div>
+      <div class="option-card" data-val="empresarial" onclick="selectSingle(this,'dedicacion')"><div class="opt-icon">🏢</div><div class="opt-title">Empresarial</div><div class="opt-desc">Quiero un portfolio de pisos.</div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goToScreen(1)">← Atrás</button>
+      <button class="btn btn-primary" onclick="goToScreen(3)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- ===== PASO 3: ESTRATEGIA ===== -->
+  <div class="screen" id="screen-3">
+    <div class="wizard-title">Estrategia de inversión</div>
+    <div class="wizard-sub">Define tu horizonte y qué priorizas para personalizar las recomendaciones.</div>
+    <div class="wizard-title" style="font-size:18px;margin-bottom:5px">Horizonte temporal</div>
+    <div class="option-grid" style="margin-bottom:1.25rem" id="horizonte-grid">
+      <div class="option-card" data-val="corto" onclick="selectSingle(this,'horizonte')"><div class="opt-title">Corto (1–3 años)</div><div class="opt-desc">Plusvalía rápida con flipping.</div></div>
+      <div class="option-card" data-val="medio" onclick="selectSingle(this,'horizonte')"><div class="opt-title">Medio (3–10 años)</div><div class="opt-desc">Alquiler + revalorización.</div></div>
+      <div class="option-card" data-val="largo" onclick="selectSingle(this,'horizonte')"><div class="opt-title">Largo (+10 años)</div><div class="opt-desc">Construir patrimonio sólido.</div></div>
+      <div class="option-card" data-val="pasivo" onclick="selectSingle(this,'horizonte')"><div class="opt-title">Renta pasiva</div><div class="opt-desc">Ingresos recurrentes para siempre.</div></div>
+    </div>
+    <div class="wizard-title" style="font-size:18px;margin-bottom:5px">¿Qué priorizas?</div>
+    <div class="option-grid" style="margin-bottom:1.25rem" id="prioridad-grid">
+      <div class="option-card" data-val="cashflow" onclick="selectSingle(this,'prioridad')"><div class="opt-icon">💰</div><div class="opt-title">Cashflow mensual</div><div class="opt-desc">Dinero en el bolsillo cada mes.</div></div>
+      <div class="option-card" data-val="revalorizacion" onclick="selectSingle(this,'prioridad')"><div class="opt-icon">📈</div><div class="opt-title">Revalorización</div><div class="opt-desc">Que el piso suba de precio.</div></div>
+      <div class="option-card" data-val="equilibrio" onclick="selectSingle(this,'prioridad')"><div class="opt-icon">⚖️</div><div class="opt-title">Equilibrio</div><div class="opt-desc">Lo mejor de los dos.</div></div>
+      <div class="option-card" data-val="seguridad" onclick="selectSingle(this,'prioridad')"><div class="opt-icon">🛡️</div><div class="opt-title">Seguridad</div><div class="opt-desc">Menos riesgo ante todo.</div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goToScreen(2)">← Atrás</button>
+      <button class="btn btn-primary" onclick="generateZones()">Ver zonas recomendadas →</button>
+    </div>
+  </div>
+
+  <!-- ===== PASO 4: ZONAS ===== -->
+  <div class="screen" id="screen-4">
+    <div class="wizard-title">Tus zonas recomendadas</div>
+    <div class="wizard-sub" id="zones-sub"></div>
+    <div class="info-box" id="budget-info"></div>
+    <div id="zone-cards" class="zone-grid"></div>
+    <div class="card" style="margin-bottom:1.5rem">
+      <div class="card-title">Cómo seguir</div>
+      <p style="font-size:14px;color:var(--text2);line-height:1.7">Entra en <strong style="color:var(--text)">Idealista</strong>, aplica los filtros de precio y zona, y cuando encuentres un piso que te interese, copia sus datos en la pestaña <strong style="color:var(--text)">Añadir piso</strong>. La app estimará el alquiler de mercado y calculará la rentabilidad automáticamente.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="goToApp()">Empezar a añadir pisos →</button>
+      <button class="btn btn-secondary" onclick="goToScreen(3)">← Ajustar</button>
+    </div>
+  </div>
+
+  <!-- ===== APP PRINCIPAL ===== -->
+  <div class="screen" id="screen-app">
+    <div class="perfil-bar" id="perfil-bar"></div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('pisos')">Añadir piso</button>
+      <button class="tab" onclick="switchTab('ranking')">Ranking</button>
+      <button class="tab" onclick="switchTab('zonas')">Mis zonas</button>
+      <button class="tab" onclick="switchTab('ajustes')">Ajustes</button>
+    </div>
+
+    <!-- TAB: AÑADIR PISO -->
+    <div id="tab-pisos">
+
+      <!-- FILTROS SUGERIDOS -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:1rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:.5rem;" onclick="toggleFiltros()">
+          <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;">Filtros sugeridos para Idealista</div>
+          <span id="filtros-icon" style="font-size:12px;color:var(--text3);">▲ ocultar</span>
+        </div>
+        <div id="filtros-body">
+          <div id="filtros-content" style="font-size:13px;color:var(--text2);line-height:2;"></div>
+          <a href="https://www.idealista.com/venta-viviendas/" target="_blank" class="btn btn-secondary" style="display:inline-block;text-decoration:none;font-size:12px;padding:7px 14px;margin-top:.75rem;">Abrir Idealista →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Datos del inmueble (de Idealista)</div>
+
+        <!-- BÁSICOS -->
+        <div class="section-label">Identificación</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Nombre / referencia</label><input type="text" id="p-nombre" placeholder="Piso Av. Goya 3hab"></div>
+          <div class="form-group"><label>Zona / barrio</label><input type="text" id="p-zona" placeholder="Doctor Cerrada, Zaragoza"></div>
+          <div class="form-group"><label>Precio de venta (€)</label><input type="number" id="p-precio" placeholder="170000" oninput="updateAlquilerBtn()"></div>
+          <div class="form-group"><label>URL Idealista (opcional)</label><input type="text" id="p-url" placeholder="https://www.idealista.com/inmueble/..."></div>
+        </div>
+
+        <!-- CARACTERÍSTICAS BÁSICAS -->
+        <div class="section-label">Características básicas</div>
+        <div class="form-grid">
+          <div class="form-group"><label>m² construidos</label><input type="number" id="p-m2c" placeholder="61" oninput="updateAlquilerBtn()"></div>
+          <div class="form-group"><label>m² útiles</label><input type="number" id="p-m2u" placeholder="56" oninput="updateAlquilerBtn()"></div>
+          <div class="form-group"><label>Habitaciones</label><input type="number" id="p-habs" placeholder="3" oninput="updateAlquilerBtn()"></div>
+          <div class="form-group"><label>Baños</label><input type="number" id="p-banos" placeholder="1" oninput="updateAlquilerBtn()"></div>
+          <div class="form-group"><label>Estado</label>
+            <select id="p-estado" onchange="updateAlquilerBtn()">
+              <option value="nuevo">Nuevo / obra nueva</option>
+              <option value="buen-estado">Segunda mano / buen estado</option>
+              <option value="reformar" selected>Segunda mano / para reformar</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Orientación</label>
+            <select id="p-orientacion" onchange="updateAlquilerBtn()">
+              <option value="">No especificada</option>
+              <option value="sur" selected>Sur</option>
+              <option value="norte">Norte</option>
+              <option value="este">Este</option>
+              <option value="oeste">Oeste</option>
+              <option value="sureste">Sureste</option>
+              <option value="suroeste">Suroeste</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Año de construcción</label><input type="number" id="p-anio" placeholder="1948" oninput="updateAlquilerBtn()"></div>
+          <div class="form-group"><label>Calefacción</label>
+            <select id="p-calefaccion" onchange="updateAlquilerBtn()">
+              <option value="no">Sin calefacción</option>
+              <option value="individual">Individual</option>
+              <option value="central">Central</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- EDIFICIO -->
+        <div class="section-label">Edificio</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Planta</label>
+            <select id="p-planta" onchange="updateAlquilerBtn()">
+              <option value="bajo">Bajo</option>
+              <option value="1" selected>1ª</option>
+              <option value="2">2ª</option>
+              <option value="3">3ª</option>
+              <option value="4">4ª</option>
+              <option value="5+">5ª o superior</option>
+              <option value="atico">Ático</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Ubicación</label>
+            <select id="p-exterior" onchange="updateAlquilerBtn()">
+              <option value="exterior" selected>Exterior</option>
+              <option value="interior">Interior</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Ascensor</label>
+            <select id="p-ascensor" onchange="updateAlquilerBtn()">
+              <option value="no" selected>Sin ascensor</option>
+              <option value="si">Con ascensor</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- EXTRAS -->
+        <div class="section-label">Extras y comodidades</div>
+        <div class="check-grid" id="extras-grid">
+          <label class="check-item" onclick="toggleCheck(this,'terraza')"><input type="checkbox" id="ex-terraza">🌿 Terraza</label>
+          <label class="check-item" onclick="toggleCheck(this,'garaje')"><input type="checkbox" id="ex-garaje">🚗 Garaje</label>
+          <label class="check-item" onclick="toggleCheck(this,'trastero')"><input type="checkbox" id="ex-trastero">📦 Trastero</label>
+          <label class="check-item" onclick="toggleCheck(this,'piscina')"><input type="checkbox" id="ex-piscina">🏊 Piscina</label>
+          <label class="check-item" onclick="toggleCheck(this,'ac')"><input type="checkbox" id="ex-ac">❄️ Aire acond.</label>
+          <label class="check-item" onclick="toggleCheck(this,'jardin')"><input type="checkbox" id="ex-jardin">🌳 Jardín</label>
+        </div>
+
+        <!-- COMENTARIO ANUNCIANTE -->
+        <div class="section-label" style="margin-top:1rem">Descripción del anuncio (pega el texto de Idealista)</div>
+        <div class="form-group">
+          <textarea id="p-descripcion" rows="4" placeholder="Pega aquí el comentario del anunciante de Idealista. La IA usará esta información para estimar el alquiler de mercado con mayor precisión..."></textarea>
+        </div>
+
+        <!-- REFORMA -->
+        <div class="section-label">Reforma</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Coste reforma estimado (€)</label><input type="number" id="p-reforma" value="0" placeholder="0"></div>
+        </div>
+
+        <!-- BOTÓN ESTIMAR ALQUILER -->
+        <div style="background:var(--blue-bg);border:1px solid var(--blue-light);border-radius:var(--radius);padding:1rem 1.25rem;margin-top:1.25rem;">
+          <div style="font-size:14px;font-weight:600;color:var(--blue);margin-bottom:4px">Estimación de alquiler con IA</div>
+          <div style="font-size:13px;color:var(--blue);opacity:.8;margin-bottom:10px">La IA analiza todas las características del piso y la zona para estimar el alquiler de mercado.</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-blue" id="btn-estimar" onclick="estimarAlquiler()" disabled>Estimar alquiler con IA</button>
+            <div id="alquiler-result" style="display:none;background:#fff;border:1px solid var(--blue-light);border-radius:var(--radius-sm);padding:6px 14px;">
+              <span style="font-size:12px;color:var(--blue)">Alquiler estimado: </span>
+              <span style="font-size:17px;font-weight:600;color:var(--blue)" id="alquiler-val">—</span>
+              <span style="font-size:12px;color:var(--blue)"> €/mes</span>
+            </div>
+          </div>
+          <div id="estimar-status" style="display:none;margin-top:8px"></div>
+          <div style="font-size:12px;color:var(--blue);opacity:.6;margin-top:8px">Requiere API key de Anthropic en Ajustes. Sin API key puedes introducir el alquiler manualmente abajo.</div>
+        </div>
+
+        <!-- ALQUILER MANUAL -->
+        <div class="form-grid" style="margin-top:1rem">
+          <div class="form-group"><label>Alquiler mensual (€) — manual o resultado IA</label><input type="number" id="p-alquiler" placeholder="650"></div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="addPiso()">Añadir y analizar</button>
+          <button class="btn btn-secondary" onclick="clearForm()">Limpiar</button>
+        </div>
+      </div>
+
+      <div id="pisos-list"></div>
+    </div>
+
+    <!-- TAB: RANKING -->
+    <div id="tab-ranking" style="display:none"><div id="ranking-content"></div></div>
+
+    <!-- TAB: ZONAS -->
+    <div id="tab-zonas" style="display:none">
+      <div class="card"><div class="card-title">Tus zonas recomendadas</div><div id="zonas-recap"></div></div>
+      <div class="card" style="margin-top:0">
+        <div class="card-title">Filtros sugeridos para Idealista</div>
+        <div id="filtros-idealista"></div>
+      </div>
+    </div>
+
+    <!-- TAB: AJUSTES -->
+    <div id="tab-ajustes" style="display:none">
+      <div class="card">
+        <div class="card-title">Gastos anuales estimados</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Gastos compra + impuestos (%)</label><input type="number" id="gastos-compra" value="10" oninput="saveConfig()"></div>
+          <div class="form-group"><label>Vacío anual (meses)</label><input type="number" id="vacio" value="1" oninput="saveConfig()"></div>
+          <div class="form-group"><label>Mantenimiento anual (%)</label><input type="number" id="mantenimiento" value="1" step="0.1" oninput="saveConfig()"></div>
+          <div class="form-group"><label>IBI + comunidad/mes (€)</label><input type="number" id="ibi" value="100" oninput="saveConfig()"></div>
+          <div class="form-group full-col"><label>Revalorización anual esperada (%)</label><input type="number" id="revalorizacion" value="3" step="0.1" oninput="saveConfig()"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">API Key de Anthropic (estimación de alquiler con IA)</div>
+        <div style="background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;font-size:13px;color:var(--amber)">
+          Consigue tu clave gratuita en <a href="https://console.anthropic.com" target="_blank" style="color:var(--amber);font-weight:600">console.anthropic.com</a>. Se guarda solo en tu navegador.
+        </div>
+        <div class="form-group"><label>API Key</label><input type="password" id="api-key-input" placeholder="sk-ant-..." oninput="saveApiKey()"></div>
+        <div id="api-key-status" style="margin-top:8px;font-size:13px;color:var(--text3)"></div>
+      </div>
     </div>
   </div>
 
 </div>
-
-<footer>
-  InversorIA · Analizador de rentabilidad inmobiliaria · Los cálculos son orientativos, no constituyen asesoramiento financiero.
-</footer>
+<footer>InversorIA · Análisis orientativo · No constituye asesoramiento financiero · España</footer>
 
 <script>
-  // ===== STATE =====
-  let perfil = { ahorros:80000,salario:3000,deudas:0,irpf:30,entradaPct:20,tipoInteres:3.5,plazo:25,gastosCompra:10,vacio:1,mantenimiento:1,ibi:100,revalorizacion:3 };
-  let pisos = [];
-  let apiKey = '';
+// ===== STATE =====
+let S = {
+  ahorros:80000, salario:3000, deudas:0, entradaPct:20,
+  tipoInteres:3.5, plazo:25, irpf:30,
+  tipos:[], dedicacion:'', horizonte:'', prioridad:'',
+  config:{ gastosCompra:10, vacio:1, mantenimiento:1, ibi:100, revalorizacion:3 },
+  zonas:[], capMax:0
+};
+let pisos = [];
+let apiKey = '';
+let extras = {};
 
-  // ===== PERSIST =====
-  function loadData() {
-    try {
-      const p = localStorage.getItem('inversoria_perfil');
-      const pi = localStorage.getItem('inversoria_pisos');
-      const k = localStorage.getItem('inversoria_apikey');
-      if (p) { perfil = JSON.parse(p); applyPerfilToForm(); }
-      if (pi) pisos = JSON.parse(pi);
-      if (k) { apiKey = k; document.getElementById('api-key-input').value = k; updateApiKeyStatus(); }
-    } catch(e) {}
+// ===== PERSIST =====
+function saveAll(){ localStorage.setItem('inv2_s',JSON.stringify(S)); localStorage.setItem('inv2_p',JSON.stringify(pisos)); }
+function loadAll(){
+  try{
+    const s=localStorage.getItem('inv2_s'), p=localStorage.getItem('inv2_p'), k=localStorage.getItem('inv2_k');
+    if(s) S={...S,...JSON.parse(s)};
+    if(p) pisos=JSON.parse(p);
+    if(k){ apiKey=k; const el=document.getElementById('api-key-input'); if(el) el.value=k; }
+    if(S.tipos.length&&S.prioridad){ hideProg(); restoreSelections(); showScreen('app'); renderApp(); }
+    else{ applySliders(); updateProgress(1); }
+  }catch(e){ updateProgress(1); }
+}
+function resetApp(){ if(!confirm('¿Reiniciar todo?')) return; localStorage.clear(); location.reload(); }
+function hideProg(){ document.getElementById('progress-wrap').style.display='none'; }
+function restoreSelections(){
+  S.tipos.forEach(v=>{const c=document.querySelector(`#tipo-grid [data-val="${v}"]`);if(c)c.classList.add('selected');});
+  ['dedicacion','horizonte','prioridad'].forEach(g=>{ if(S[g]){const c=document.querySelector(`#${g}-grid [data-val="${S[g]}"]`);if(c)c.classList.add('selected');}});
+}
+
+// ===== SLIDERS & CAPACITY =====
+function applySliders(){
+  ['ahorros','salario','deudas'].forEach(k=>{
+    const el=document.getElementById('sl-'+k); if(el) el.value=S[k];
+  });
+  updateSliderDisplay('ahorros'); updateSliderDisplay('salario'); updateSliderDisplay('deudas');
+  recalcCapacity();
+}
+function updateSliderDisplay(k){
+  const val=+document.getElementById('sl-'+k).value;
+  S[k]=val;
+  const sfx=k==='ahorros'?' €':' €/mes';
+  document.getElementById('val-'+k).textContent=fmt(val)+sfx;
+}
+function recalcCapacity(){
+  updateSliderDisplay('ahorros'); updateSliderDisplay('salario'); updateSliderDisplay('deudas');
+  S.entradaPct=+document.getElementById('entrada-pct').value;
+  S.tipoInteres=+document.getElementById('tipo-interes').value;
+  S.plazo=+document.getElementById('plazo').value;
+
+  // Max cuota = 35% neto - deudas
+  const cuotaMax = S.salario * 0.35 - S.deudas;
+  // Back-calc max capital from cuota
+  const r=(S.tipoInteres/100)/12, n=S.plazo*12;
+  const maxCapital = cuotaMax * (Math.pow(1+r,n)-1) / (r*Math.pow(1+r,n));
+  // Max precio from capital + entrada
+  const maxPrecio = maxCapital / (1 - S.entradaPct/100);
+  // Also constrained by ahorros (entrada + gastos ≤ ahorros)
+  const maxPrecioByAhorros = S.ahorros / (S.entradaPct/100 + 0.10); // 10% gastos
+  const finalMax = Math.min(maxPrecio, maxPrecioByAhorros);
+  S.capMax = finalMax;
+
+  const entradaReal = finalMax * S.entradaPct/100;
+  const gastosCompra = finalMax * 0.10;
+  const restante = S.ahorros - entradaReal - gastosCompra;
+  const cuotaReal = calcCuota(finalMax*(1-S.entradaPct/100));
+
+  document.getElementById('cap-precio-max').textContent = fmt(finalMax)+' €';
+  document.getElementById('cap-cuota-max').textContent = fmt(cuotaReal)+' €/mes';
+  document.getElementById('cap-restante').textContent = fmt(Math.max(0,restante))+' €';
+  document.getElementById('cap-note').textContent =
+    `Basado en el 35% de endeudamiento máximo recomendado. Entrada: ${fmt(entradaReal)} € + gastos compra: ~${fmt(gastosCompra)} €`;
+}
+
+function calcCuota(capital){
+  const r=(S.tipoInteres/100)/12,n=S.plazo*12;
+  return r>0?capital*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1):capital/n;
+}
+
+// ===== NAVIGATION =====
+function goToScreen(n){
+  // Validaciones al salir de cada paso (no al entrar)
+  if(n===3&&!document.querySelector('#tipo-grid .selected')){ alert('Elige al menos un tipo de inversión.'); return; }
+  if(n===3&&!document.querySelector('#dedicacion-grid .selected')){ alert('Elige tu disponibilidad de tiempo.'); return; }
+  if(n===4&&!document.querySelector('#horizonte-grid .selected')){ alert('Elige tu horizonte temporal.'); return; }
+  if(n===4&&!document.querySelector('#prioridad-grid .selected')){ alert('Elige qué priorizas.'); return; }
+
+  // Guardar estado del paso 1 solo si sus elementos existen
+  const ep=document.getElementById('entrada-pct');
+  const ti=document.getElementById('tipo-interes');
+  const pl=document.getElementById('plazo');
+  const ir=document.getElementById('irpf');
+  if(ep) S.entradaPct=+ep.value;
+  if(ti) S.tipoInteres=+ti.value;
+  if(pl) S.plazo=+pl.value;
+  if(ir) S.irpf=+ir.value||30;
+
+  // Guardar selecciones del paso 2
+  S.tipos=Array.from(document.querySelectorAll('#tipo-grid .selected')).map(c=>c.dataset.val);
+  const ded=document.querySelector('#dedicacion-grid .selected');
+  if(ded) S.dedicacion=ded.dataset.val;
+
+  // Guardar selecciones del paso 3
+  const hor=document.querySelector('#horizonte-grid .selected');
+  if(hor) S.horizonte=hor.dataset.val;
+  const pri=document.querySelector('#prioridad-grid .selected');
+  if(pri) S.prioridad=pri.dataset.val;
+
+  ['1','2','3','4'].forEach(i=>{ const el=document.getElementById('screen-'+i); if(el) el.classList.toggle('active',+i===n); });
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('progress-wrap').style.display='block';
+  updateProgress(n);
+  window.scrollTo(0,0);
+  saveAll();
+}
+function updateProgress(n){
+  for(let i=1;i<=4;i++){
+    document.getElementById('ps-'+i).className='progress-step'+(i<n?' done':i===n?' active':'');
+    document.getElementById('pl-'+i).className='progress-label'+(i===n?' active':'');
+  }
+}
+function showScreen(name){
+  ['1','2','3','4','app'].forEach(id=>{ const el=document.getElementById('screen-'+id); if(el) el.classList.toggle('active',id===name); });
+}
+function goToApp(){
+  hideProg();
+  showScreen('app');
+  renderApp();
+  saveAll();
+}
+
+// ===== SELECTIONS =====
+function toggleMulti(card){
+  card.classList.toggle('selected');
+  S.tipos=Array.from(document.querySelectorAll('#tipo-grid .selected')).map(c=>c.dataset.val);
+}
+function selectSingle(card,group){
+  card.closest('.option-grid').querySelectorAll('.option-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected'); S[group]=card.dataset.val;
+}
+function toggleCheck(label,key){
+  label.classList.toggle('checked');
+  extras[key]=label.classList.contains('checked');
+  updateAlquilerBtn();
+}
+
+// ===== ZONE DB =====
+const ZONAS=[
+  {nombre:'Ruzafa',ciudad:'Valencia',tags:['Alta demanda','Turismo','Revalorización'],tipos:['larga-estancia','airbnb'],prioridad:['cashflow','equilibrio'],dedicacion:['moderada','activa'],rentMedia:6.2,precioM2:2800,revalAnual:5,horizonte:['medio','largo','pasivo'],minEntry:70000,desc:'El barrio más dinámico de Valencia con altísima demanda turística y residencial.'},
+  {nombre:'Centro histórico',ciudad:'Málaga',tags:['Airbnb top','Sol','Alta demanda'],tipos:['airbnb','larga-estancia'],prioridad:['cashflow','equilibrio'],dedicacion:['activa','moderada'],rentMedia:7.1,precioM2:3200,revalAnual:6,horizonte:['corto','medio'],minEntry:90000,desc:'El mercado vacacional más rentable de España. Demanda internacional todo el año.'},
+  {nombre:'Vallecas',ciudad:'Madrid',tags:['Precio bajo','Cashflow','Residencial'],tipos:['larga-estancia','habitaciones'],prioridad:['cashflow','seguridad'],dedicacion:['minima','moderada'],rentMedia:6.8,precioM2:2200,revalAnual:4,horizonte:['medio','largo','pasivo'],minEntry:55000,desc:'Mejor relación precio/rentabilidad de Madrid. Alta demanda y precios asequibles.'},
+  {nombre:'Deusto',ciudad:'Bilbao',tags:['Universitario','Estable','Habitaciones'],tipos:['habitaciones','larga-estancia'],prioridad:['cashflow','seguridad'],dedicacion:['activa','moderada'],rentMedia:7.4,precioM2:2600,revalAnual:3,horizonte:['largo','pasivo'],minEntry:65000,desc:'Zona universitaria con ocupación casi garantizada. Ideal por habitaciones.'},
+  {nombre:'Triana',ciudad:'Sevilla',tags:['Turismo','Flipping','Revalorización'],tipos:['airbnb','flipping'],prioridad:['revalorizacion','cashflow'],dedicacion:['activa','empresarial'],rentMedia:6.5,precioM2:2400,revalAnual:5.5,horizonte:['corto','medio'],minEntry:65000,desc:'Barrio en transformación con gran potencial de revalorización y turismo.'},
+  {nombre:'Badalona',ciudad:'Barcelona',tags:['Precio bajo','Revalorización','Mar'],tipos:['larga-estancia','airbnb'],prioridad:['revalorizacion','equilibrio'],dedicacion:['minima','moderada'],rentMedia:5.8,precioM2:2900,revalAnual:5,horizonte:['largo','medio'],minEntry:95000,desc:'A 10 min de Barcelona con precios muy inferiores y alta revalorización esperada.'},
+  {nombre:'San Juan de Alicante',ciudad:'Alicante',tags:['Vacacional','Sol','Airbnb'],tipos:['airbnb'],prioridad:['cashflow','revalorizacion'],dedicacion:['activa','empresarial'],rentMedia:8.2,precioM2:2100,revalAnual:4.5,horizonte:['corto','medio'],minEntry:45000,desc:'Una de las rentabilidades brutas más altas de España para alquiler vacacional.'},
+  {nombre:'Centro',ciudad:'Zaragoza',tags:['Estable','Precio bajo','Familias'],tipos:['larga-estancia'],prioridad:['seguridad','equilibrio'],dedicacion:['minima','moderada'],rentMedia:6.1,precioM2:1800,revalAnual:3.5,horizonte:['largo','pasivo'],minEntry:45000,desc:'Mercado muy estable con precios bajos y buena demanda residencial.'},
+  {nombre:'Espinardo',ciudad:'Murcia',tags:['Universitario','Económico','Habitaciones'],tipos:['habitaciones','larga-estancia'],prioridad:['cashflow'],dedicacion:['activa','moderada'],rentMedia:7.8,precioM2:1400,revalAnual:3,horizonte:['medio','pasivo'],minEntry:35000,desc:'El mercado más económico para empezar con altísima demanda universitaria.'},
+  {nombre:'Getafe',ciudad:'Madrid sur',tags:['Industria','Flipping','Precio bajo'],tipos:['flipping','larga-estancia'],prioridad:['revalorizacion','cashflow'],dedicacion:['activa','empresarial'],rentMedia:6.4,precioM2:1900,revalAnual:4.5,horizonte:['corto','medio'],minEntry:50000,desc:'Crecimiento continuo industrial y residencial. Buenas oportunidades de flipping.'},
+];
+
+function generateZones(){
+  // Recoger selecciones del paso 3 por si acaso
+  const hor=document.querySelector('#horizonte-grid .selected');
+  const pri=document.querySelector('#prioridad-grid .selected');
+  if(hor) S.horizonte=hor.dataset.val;
+  if(pri) S.prioridad=pri.dataset.val;
+  if(!S.horizonte){alert('Elige tu horizonte temporal.');return;}
+  if(!S.prioridad){alert('Elige qué priorizas.');return;}
+  S.tipos=Array.from(document.querySelectorAll('#tipo-grid .selected')).map(c=>c.dataset.val);
+  const ded=document.querySelector('#dedicacion-grid .selected');
+  if(ded) S.dedicacion=ded.dataset.val;
+
+  goToScreen(4);
+  const maxP=S.capMax;
+  document.getElementById('zones-sub').textContent=`Para un perfil de ${S.tipos.join(', ')} con presupuesto hasta ${fmt(maxP)} €.`;
+  document.getElementById('budget-info').innerHTML=
+    `Precio máximo de compra: <strong>${fmt(maxP)} €</strong> · Entrada necesaria: <strong>${fmt(maxP*S.entradaPct/100)} €</strong> · Cuota hipoteca estimada: <strong>${fmt(calcCuota(maxP*(1-S.entradaPct/100)))} €/mes</strong><br>Busca pisos en Idealista con precio máximo de <strong>${fmt(maxP)} €</strong>.`;
+
+  const scored=ZONAS.map(z=>{
+    let s=0;
+    s+=S.tipos.filter(t=>z.tipos.includes(t)).length*25;
+    if(z.prioridad.includes(S.prioridad)) s+=20;
+    if(z.dedicacion&&z.dedicacion.includes(S.dedicacion)) s+=15;
+    if(S.horizonte&&z.horizonte.includes(S.horizonte)) s+=15;
+    if(z.minEntry<=S.ahorros) s+=15;
+    if(z.minEntry<=S.ahorros*.6) s+=10;
+    s+=Math.min(z.rentMedia,10);
+    return{...z,score:s};
+  }).filter(z=>z.minEntry<=maxP*1.3).sort((a,b)=>b.score-a.score).slice(0,6);
+  S.zonas=scored;
+
+  document.getElementById('zone-cards').innerHTML=scored.map((z,i)=>`
+    <div class="zone-card">
+      <div class="zone-rank ${i<2?'top':'mid'}">${i===0?'★ Mejor opción':i<3?'▲ Muy recomendada':'● Interesante'}</div>
+      <div class="zone-name">${z.nombre}</div>
+      <div class="zone-city">${z.ciudad}</div>
+      <div class="zone-tags">${z.tags.map(t=>`<span class="tag tag-${i<2?'green':i<4?'blue':'amber'}">${t}</span>`).join('')}</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5">${z.desc}</p>
+      <div class="zone-metrics">
+        <div class="zm"><div class="zm-label">Rent. bruta est.</div><div class="zm-val" style="color:var(--green)">${z.rentMedia}%</div></div>
+        <div class="zm"><div class="zm-label">Precio/m²</div><div class="zm-val">${fmt(z.precioM2)} €</div></div>
+        <div class="zm"><div class="zm-label">Revalor. anual</div><div class="zm-val" style="color:var(--blue)">+${z.revalAnual}%</div></div>
+        <div class="zm"><div class="zm-label">Entrada mín.</div><div class="zm-val">${fmt(z.minEntry)} €</div></div>
+      </div>
+    </div>`).join('');
+  saveAll();
+}
+
+// ===== APP =====
+function renderApp(){
+  const tipos=S.tipos.map(t=>({'larga-estancia':'larga estancia','airbnb':'Airbnb','flipping':'flipping','habitaciones':'habitaciones'}[t]||t)).join(', ');
+  document.getElementById('perfil-bar').innerHTML=
+    `<span class="perfil-bar-text">Hasta ${fmt(S.capMax)} € · ${tipos} · ${S.prioridad||''}</span>
+     <button class="btn btn-secondary" style="font-size:12px;padding:5px 12px" onclick="goToScreen(1)">Editar perfil</button>`;
+
+  if(S.zonas&&S.zonas.length){
+    document.getElementById('zonas-recap').innerHTML=S.zonas.map(z=>`
+      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="font-weight:600;font-size:14px">${z.nombre} <span style="font-weight:400;color:var(--text2);font-size:13px">— ${z.ciudad}</span></div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">${z.tags.join(' · ')} · Rent. ${z.rentMedia}% · ${fmt(z.precioM2)} €/m²</div>
+      </div>`).join('');
+
+    // Filtros sugeridos
+    const topZona=S.zonas[0];
+    document.getElementById('filtros-idealista').innerHTML=`
+      <div style="font-size:13px;color:var(--text2);line-height:1.9">
+        <strong style="color:var(--text)">Operación:</strong> Venta<br>
+        <strong style="color:var(--text)">Zona:</strong> ${S.zonas.slice(0,3).map(z=>z.nombre+' ('+z.ciudad+')').join(', ')}<br>
+        <strong style="color:var(--text)">Precio máximo:</strong> ${fmt(S.capMax)} €<br>
+        <strong style="color:var(--text)">Habitaciones:</strong> ${S.tipos.includes('habitaciones')?'3+':'2+'}<br>
+        <strong style="color:var(--text)">Estado:</strong> ${S.tipos.includes('flipping')?'A reformar (para comprar barato)':'Cualquiera'}<br>
+        <strong style="color:var(--text)">Extras recomendados:</strong> ${S.tipos.includes('airbnb')?'Exterior, terraza, aire acondicionado':'Exterior, ascensor'}
+      </div>`;
   }
 
-  function saveData() {
-    localStorage.setItem('inversoria_perfil', JSON.stringify(perfil));
-    localStorage.setItem('inversoria_pisos', JSON.stringify(pisos));
-  }
+  applyConfigToForm();
+  const ak=document.getElementById('api-key-input'); if(ak) ak.value=apiKey;
+  updateApiKeyStatus();
+  renderFiltros();
+  renderPisos();
+}
 
-  function saveApiKey() {
-    apiKey = document.getElementById('api-key-input').value.trim();
-    localStorage.setItem('inversoria_apikey', apiKey);
-    updateApiKeyStatus();
-  }
+function applyConfigToForm(){
+  const c=S.config;
+  document.getElementById('gastos-compra').value=c.gastosCompra;
+  document.getElementById('vacio').value=c.vacio;
+  document.getElementById('mantenimiento').value=c.mantenimiento;
+  document.getElementById('ibi').value=c.ibi;
+  document.getElementById('revalorizacion').value=c.revalorizacion;
+}
+function saveConfig(){
+  S.config={
+    gastosCompra:+document.getElementById('gastos-compra').value||10,
+    vacio:+document.getElementById('vacio').value||1,
+    mantenimiento:+document.getElementById('mantenimiento').value||1,
+    ibi:+document.getElementById('ibi').value||100,
+    revalorizacion:+document.getElementById('revalorizacion').value||3
+  };
+  saveAll(); renderPisos();
+}
+function saveApiKey(){
+  apiKey=document.getElementById('api-key-input').value.trim();
+  localStorage.setItem('inv2_k',apiKey);
+  updateApiKeyStatus();
+  updateAlquilerBtn();
+}
+function updateApiKeyStatus(){
+  const el=document.getElementById('api-key-status'); if(!el) return;
+  if(apiKey&&apiKey.startsWith('sk-ant-')){ el.textContent='API key configurada correctamente.'; el.style.color='var(--green)'; }
+  else if(apiKey){ el.textContent='Clave incorrecta (debe empezar por sk-ant-).'; el.style.color='var(--red)'; }
+  else{ el.textContent='Sin API key — estima el alquiler manualmente.'; el.style.color='var(--text3)'; }
+}
 
-  function updateApiKeyStatus() {
-    const el = document.getElementById('api-key-status');
-    if (apiKey && apiKey.startsWith('sk-ant-')) {
-      el.textContent = 'API key guardada correctamente.';
-      el.style.color = 'var(--green)';
-    } else if (apiKey) {
-      el.textContent = 'La clave no parece correcta (debe empezar por sk-ant-).';
-      el.style.color = 'var(--red)';
-    } else {
-      el.textContent = 'Sin API key. La extracción automática no estará disponible.';
-      el.style.color = 'var(--text3)';
-    }
-  }
+function switchTab(tab){
+  document.querySelectorAll('.tabs .tab').forEach((t,i)=>t.classList.toggle('active',['pisos','ranking','zonas','ajustes'][i]===tab));
+  ['pisos','ranking','zonas','ajustes'].forEach(id=>{
+    const el=document.getElementById('tab-'+id); if(el) el.style.display=id===tab?'block':'none';
+  });
+  if(tab==='ranking') renderRanking();
+}
 
-  function clearAllData() {
-    if (!confirm('¿Seguro que quieres borrar todos los pisos y tu perfil?')) return;
-    localStorage.clear();
-    pisos = [];
-    perfil = { ahorros:80000,salario:3000,deudas:0,irpf:30,entradaPct:20,tipoInteres:3.5,plazo:25,gastosCompra:10,vacio:1,mantenimiento:1,ibi:100,revalorizacion:3 };
-    applyPerfilToForm();
-    renderPisos();
-    alert('Datos borrados.');
-  }
+// ===== ALQUILER ESTIMATOR =====
+function updateAlquilerBtn(){
+  const btn=document.getElementById('btn-estimar');
+  if(!btn) return;
+  const precio=+document.getElementById('p-precio').value;
+  const zona=document.getElementById('p-zona').value.trim();
+  btn.disabled=!(apiKey&&apiKey.startsWith('sk-ant-')&&precio&&zona);
+}
 
-  function applyPerfilToForm() {
-    const fields = { ahorros:'ahorros',salario:'salario',deudas:'deudas',irpf:'irpf',entradaPct:'entrada-pct',tipoInteres:'tipo-interes',plazo:'plazo',gastosCompra:'gastos-compra',vacio:'vacio',mantenimiento:'mantenimiento',ibi:'ibi',revalorizacion:'revalorizacion' };
-    for (const [key, id] of Object.entries(fields)) {
-      const el = document.getElementById(id);
-      if (el) el.value = perfil[key];
-    }
-  }
+async function estimarAlquiler(){
+  const precio=+document.getElementById('p-precio').value;
+  const zona=document.getElementById('p-zona').value;
+  const m2u=document.getElementById('p-m2u').value||document.getElementById('p-m2c').value;
+  const habs=document.getElementById('p-habs').value;
+  const banos=document.getElementById('p-banos').value;
+  const estado=document.getElementById('p-estado').value;
+  const orientacion=document.getElementById('p-orientacion').value;
+  const planta=document.getElementById('p-planta').value;
+  const exterior=document.getElementById('p-exterior').value;
+  const ascensor=document.getElementById('p-ascensor').value;
+  const anio=document.getElementById('p-anio').value;
+  const calef=document.getElementById('p-calefaccion').value;
+  const descripcion=document.getElementById('p-descripcion').value;
+  const extrasActivos=Object.keys(extras).filter(k=>extras[k]);
 
-  function savePerfil() {
-    perfil = {
-      ahorros: +document.getElementById('ahorros').value||80000,
-      salario: +document.getElementById('salario').value||3000,
-      deudas: +document.getElementById('deudas').value||0,
-      irpf: +document.getElementById('irpf').value||30,
-      entradaPct: +document.getElementById('entrada-pct').value||20,
-      tipoInteres: +document.getElementById('tipo-interes').value||3.5,
-      plazo: +document.getElementById('plazo').value||25,
-      gastosCompra: +document.getElementById('gastos-compra').value||10,
-      vacio: +document.getElementById('vacio').value||1,
-      mantenimiento: +document.getElementById('mantenimiento').value||1,
-      ibi: +document.getElementById('ibi').value||100,
-      revalorizacion: +document.getElementById('revalorizacion').value||3
-    };
-    saveData();
-  }
+  const btn=document.getElementById('btn-estimar');
+  btn.disabled=true; btn.textContent='Estimando...';
+  const sEl=document.getElementById('estimar-status');
+  sEl.style.display='flex'; sEl.className='status-msg status-loading';
+  sEl.innerHTML='<span class="spinner"></span> Analizando características y mercado local...';
 
-  // ===== CALCULOS =====
-  function calcularPiso(p) {
-    const precio = p.precio, reforma = p.reforma || 0;
-    const gastosCompra = precio * perfil.gastosCompra / 100;
-    const inversion = precio * (perfil.entradaPct / 100) + gastosCompra + reforma;
-    const capital = precio * (1 - perfil.entradaPct / 100);
-    const r = (perfil.tipoInteres / 100) / 12;
-    const n = perfil.plazo * 12;
-    const cuota = r > 0 ? capital * r * Math.pow(1+r,n) / (Math.pow(1+r,n)-1) : capital / n;
-    const alqBrutoAnual = p.alquiler * (12 - perfil.vacio);
-    const gastosAnuales = precio * perfil.mantenimiento / 100 + perfil.ibi * 12;
-    const alqNetoAnual = alqBrutoAnual - gastosAnuales;
-    const rentBruta = (alqBrutoAnual / precio) * 100;
-    const rentNeta = (alqNetoAnual / precio) * 100;
-    const cashflow = (p.alquiler * (12 - perfil.vacio) / 12) - cuota - perfil.ibi - (precio * perfil.mantenimiento / 100 / 12);
-    const revalAnual = precio * perfil.revalorizacion / 100;
-    const yoc = (alqNetoAnual / inversion) * 100;
-    const payback = inversion / (alqNetoAnual > 0 ? alqNetoAnual : 1);
-    let score = Math.min(rentNeta * 5, 40) + (cashflow > 0 ? Math.min(cashflow / 20, 30) : 0) + Math.min(perfil.revalorizacion * 3, 20) + (yoc > 5 ? 10 : yoc > 3 ? 5 : 0);
-    return { inversion, cuota, alqBrutoAnual, alqNetoAnual, rentBruta, rentNeta, cashflow, revalAnual, yoc, payback, score: Math.min(Math.round(score), 100) };
-  }
+  const prompt=`Eres un experto inmobiliario español. Estima el precio de alquiler mensual de mercado para este inmueble.
 
-  // ===== EXTRACT URL =====
-  async function extractFromUrl() {
-    const url = document.getElementById('piso-url-import').value.trim();
-    if (!url) { showStatus('Introduce una URL de Idealista.', 'err'); return; }
-    if (!apiKey || !apiKey.startsWith('sk-ant-')) {
-      showStatus('Necesitas configurar tu API key de Anthropic en la pestaña Configuración.', 'err');
-      return;
-    }
-    const btn = document.getElementById('btn-extract');
-    btn.disabled = true;
-    btn.textContent = 'Extrayendo...';
-    showStatus('<span class="spinner"></span> Analizando el anuncio con IA...', 'loading');
+DATOS DEL INMUEBLE:
+- Zona: ${zona}
+- Precio de venta: ${precio} €
+- Metros útiles: ${m2u} m²
+- Habitaciones: ${habs} | Baños: ${banos}
+- Estado: ${estado}
+- Orientación: ${orientacion}
+- Planta: ${planta} | Ubicación: ${exterior}
+- Ascensor: ${ascensor}
+- Año construcción: ${anio}
+- Calefacción: ${calef}
+- Extras: ${extrasActivos.length?extrasActivos.join(', '):'ninguno'}
+${descripcion?`- Descripción anunciante: "${descripcion}"` :''}
 
-    const prompt = `Analiza este anuncio inmobiliario: ${url}
+Considera factores como: ubicación exacta, planta (bajo/sin ascensor penaliza, ático premium), orientación (sur +, norte -), estado (reformar penaliza), extras (terraza +, garaje +), año construcción, mercado actual de alquiler en esa zona.
 
-Busca la URL en la web y extrae los datos. Responde ÚNICAMENTE con un objeto JSON válido, sin markdown, sin explicaciones, sin texto adicional:
-{
-  "nombre": "descripción breve (ej: Piso 3hab Malasaña)",
-  "zona": "barrio y ciudad",
-  "precio": precio en euros como número entero,
-  "metros": metros útiles como número entero,
-  "habs": habitaciones como número entero,
-  "alquiler_estimado": estimación mensual de alquiler de mercado en euros como número entero,
-  "estado": "buen-estado" o "reformar" o "nuevo",
-  "reforma": coste estimado de reforma en euros como número entero o 0
-}`;
+Responde SOLO con un JSON: {"alquiler_min": número, "alquiler_max": número, "alquiler_medio": número, "explicacion": "texto breve de 1-2 frases"}`;
 
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No se encontró JSON');
-      const d = JSON.parse(jsonMatch[0]);
-      document.getElementById('piso-nombre').value = d.nombre || '';
-      document.getElementById('piso-zona').value = d.zona || '';
-      document.getElementById('piso-precio').value = d.precio || '';
-      document.getElementById('piso-metros').value = d.metros || '';
-      document.getElementById('piso-habs').value = d.habs || '';
-      document.getElementById('piso-alquiler').value = d.alquiler_estimado || '';
-      document.getElementById('piso-estado').value = d.estado || 'buen-estado';
-      document.getElementById('piso-reforma').value = d.reforma || 0;
-      document.getElementById('piso-url-manual').value = url;
-      document.getElementById('piso-url-import').value = '';
-      showStatus('Datos extraídos correctamente. Revisa y ajusta si hace falta, luego pulsa Añadir piso.', 'ok');
-    } catch(e) {
-      showStatus('No se pudieron extraer los datos. Comprueba tu API key o rellena el formulario manualmente.', 'err');
-    }
-    btn.disabled = false;
-    btn.textContent = 'Extraer datos';
-  }
-
-  function showStatus(msg, type) {
-    const el = document.getElementById('extract-status');
-    el.style.display = 'block';
-    el.className = 'status-msg status-' + type;
-    el.innerHTML = msg;
-  }
-
-  // ===== PISOS CRUD =====
-  function addPiso() {
-    const nombre = document.getElementById('piso-nombre').value.trim();
-    if (!nombre) { alert('Añade un nombre o referencia al piso.'); return; }
-    const precio = +document.getElementById('piso-precio').value;
-    if (!precio) { alert('Añade el precio de compra.'); return; }
-    const alquiler = +document.getElementById('piso-alquiler').value;
-    if (!alquiler) { alert('Añade el alquiler mensual estimado.'); return; }
-    pisos.push({
-      id: Date.now(),
-      nombre,
-      zona: document.getElementById('piso-zona').value,
-      precio,
-      metros: +document.getElementById('piso-metros').value || 1,
-      habs: +document.getElementById('piso-habs').value || 0,
-      alquiler,
-      estado: document.getElementById('piso-estado').value,
-      reforma: +document.getElementById('piso-reforma').value || 0,
-      url: document.getElementById('piso-url-manual').value
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:prompt}]})
     });
-    saveData();
-    clearForm();
-    document.getElementById('extract-status').style.display = 'none';
-    renderPisos();
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const d=JSON.parse(text.match(/\{[\s\S]*\}/)[0]);
+    document.getElementById('p-alquiler').value=d.alquiler_medio;
+    document.getElementById('alquiler-val').textContent=fmt(d.alquiler_medio);
+    document.getElementById('alquiler-result').style.display='flex';
+    sEl.className='status-msg status-ok';
+    sEl.innerHTML=`Rango estimado: ${fmt(d.alquiler_min)}–${fmt(d.alquiler_max)} €/mes · ${d.explicacion}`;
+  }catch(e){
+    sEl.className='status-msg status-err';
+    sEl.innerHTML='No se pudo estimar. Introduce el alquiler manualmente.';
   }
+  btn.disabled=false; btn.textContent='Estimar alquiler con IA';
+  updateAlquilerBtn();
+}
 
-  function clearForm() {
-    ['piso-nombre','piso-zona','piso-precio','piso-metros','piso-habs','piso-alquiler','piso-url-manual','piso-url-import'].forEach(id => {
-      const el = document.getElementById(id); if (el) el.value = '';
-    });
-    document.getElementById('piso-reforma').value = '0';
-    document.getElementById('piso-estado').value = 'buen-estado';
+// ===== CALCULOS RENTABILIDAD =====
+function buildFeatures(p){
+  const feats=[];
+  if(p.ascensor==='si') feats.push({label:'Ascensor',pos:true});
+  else feats.push({label:'Sin ascensor',pos:false});
+  if(p.exterior==='exterior') feats.push({label:'Exterior',pos:true});
+  else feats.push({label:'Interior',pos:false});
+  if(p.orientacion==='sur'||p.orientacion==='sureste'||p.orientacion==='suroeste') feats.push({label:'Orientación '+p.orientacion,pos:true});
+  else if(p.orientacion==='norte') feats.push({label:'Orientación norte',pos:false});
+  if(p.planta==='atico') feats.push({label:'Ático',pos:true});
+  if(p.estado==='reformar') feats.push({label:'A reformar',pos:false});
+  if(p.estado==='nuevo') feats.push({label:'Nuevo',pos:true});
+  if(p.extras&&p.extras.terraza) feats.push({label:'Terraza',pos:true});
+  if(p.extras&&p.extras.garaje) feats.push({label:'Garaje',pos:true});
+  if(p.extras&&p.extras.ac) feats.push({label:'Aire acond.',pos:true});
+  return feats;
+}
+
+function calcularPiso(p){
+  const c=S.config;
+  const precio=p.precio, reforma=p.reforma||0;
+  const gasto=precio*c.gastosCompra/100;
+  const inversion=precio*(S.entradaPct/100)+gasto+reforma;
+  const capital=precio*(1-S.entradaPct/100);
+  const cuota=calcCuota(capital);
+  const alqBruto=p.alquiler*(12-c.vacio);
+  const gastoAn=precio*c.mantenimiento/100+c.ibi*12;
+  const alqNeto=alqBruto-gastoAn;
+  const rentBruta=(alqBruto/precio)*100;
+  const rentNeta=(alqNeto/precio)*100;
+  const cashflow=(p.alquiler*(12-c.vacio)/12)-cuota-c.ibi-(precio*c.mantenimiento/100/12);
+  const revalAnual=precio*c.revalorizacion/100;
+  const yoc=(alqNeto/inversion)*100;
+  const payback=inversion/(alqNeto>0?alqNeto:1);
+  let score=Math.min(rentNeta*5,35);
+  if(['cashflow','equilibrio'].includes(S.prioridad)) score+=cashflow>0?Math.min(cashflow/15,35):0;
+  if(['revalorizacion','equilibrio'].includes(S.prioridad)) score+=Math.min(c.revalorizacion*4,25);
+  if(S.prioridad==='seguridad') score+=rentNeta>3?20:10;
+  score+=yoc>5?10:yoc>3?5:0;
+  // Bonus por características positivas
+  const feats=buildFeatures(p);
+  const posCount=feats.filter(f=>f.pos).length;
+  const negCount=feats.filter(f=>!f.pos).length;
+  score+=posCount*1.5-negCount*2;
+  return{inversion,cuota,rentBruta,rentNeta,cashflow,revalAnual,yoc,payback,score:Math.min(Math.max(Math.round(score),0),100)};
+}
+
+// ===== CRUD =====
+function addPiso(){
+  const nombre=document.getElementById('p-nombre').value.trim();
+  if(!nombre){alert('Añade un nombre.');return;}
+  const precio=+document.getElementById('p-precio').value;
+  if(!precio){alert('Añade el precio de venta.');return;}
+  const alquiler=+document.getElementById('p-alquiler').value;
+  if(!alquiler){alert('Añade el alquiler estimado (usa la IA o introduce uno manualmente).');return;}
+
+  pisos.push({
+    id:Date.now(), nombre,
+    zona:document.getElementById('p-zona').value,
+    precio, reforma:+document.getElementById('p-reforma').value||0,
+    m2c:+document.getElementById('p-m2c').value||0,
+    m2u:+document.getElementById('p-m2u').value||0,
+    habs:+document.getElementById('p-habs').value||0,
+    banos:+document.getElementById('p-banos').value||0,
+    estado:document.getElementById('p-estado').value,
+    orientacion:document.getElementById('p-orientacion').value,
+    anio:document.getElementById('p-anio').value,
+    calefaccion:document.getElementById('p-calefaccion').value,
+    planta:document.getElementById('p-planta').value,
+    exterior:document.getElementById('p-exterior').value,
+    ascensor:document.getElementById('p-ascensor').value,
+    extras:{...extras},
+    alquiler,
+    url:document.getElementById('p-url').value
+  });
+  saveAll(); clearForm(); renderPisos();
+}
+
+function clearForm(){
+  ['p-nombre','p-zona','p-precio','p-m2c','p-m2u','p-habs','p-banos','p-anio','p-reforma','p-alquiler','p-url','p-descripcion'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('p-reforma').value='0';
+  document.getElementById('p-estado').value='buen-estado';
+  document.getElementById('p-orientacion').value='';
+  document.getElementById('p-calefaccion').value='individual';
+  document.getElementById('p-planta').value='1';
+  document.getElementById('p-exterior').value='exterior';
+  document.getElementById('p-ascensor').value='si';
+  document.querySelectorAll('.check-item').forEach(el=>el.classList.remove('checked'));
+  extras={};
+  document.getElementById('alquiler-result').style.display='none';
+  document.getElementById('estimar-status').style.display='none';
+  updateAlquilerBtn();
+}
+
+function deletePiso(id){
+  if(!confirm('¿Eliminar?')) return;
+  pisos=pisos.filter(p=>p.id!==id); saveAll(); renderPisos();
+}
+
+function editPiso(id){
+  const p=pisos.find(x=>x.id===id);
+  if(!p) return;
+  // Populate form
+  document.getElementById('p-nombre').value=p.nombre||'';
+  document.getElementById('p-zona').value=p.zona||'';
+  document.getElementById('p-precio').value=p.precio||'';
+  document.getElementById('p-url').value=p.url||'';
+  document.getElementById('p-m2c').value=p.m2c||'';
+  document.getElementById('p-m2u').value=p.m2u||'';
+  document.getElementById('p-habs').value=p.habs||'';
+  document.getElementById('p-banos').value=p.banos||'';
+  document.getElementById('p-estado').value=p.estado||'buen-estado';
+  document.getElementById('p-orientacion').value=p.orientacion||'';
+  document.getElementById('p-anio').value=p.anio||'';
+  document.getElementById('p-calefaccion').value=p.calefaccion||'no';
+  document.getElementById('p-planta').value=p.planta||'1';
+  document.getElementById('p-exterior').value=p.exterior||'exterior';
+  document.getElementById('p-ascensor').value=p.ascensor||'no';
+  document.getElementById('p-reforma').value=p.reforma||0;
+  document.getElementById('p-alquiler').value=p.alquiler||'';
+  // Extras
+  extras=p.extras?{...p.extras}:{};
+  document.querySelectorAll('.check-item').forEach(el=>{
+    const key=el.getAttribute('onclick').match(/'(\w+)'/)?.[1];
+    if(key) el.classList.toggle('checked',!!extras[key]);
+  });
+  // Remove old and mark as editing
+  pisos=pisos.filter(x=>x.id!==id);
+  saveAll(); renderPisos();
+  // Scroll to form
+  document.getElementById('tab-pisos').scrollIntoView({behavior:'smooth'});
+  updateAlquilerBtn();
+}
+
+let filtrosVisible=true;
+function toggleFiltros(){
+  filtrosVisible=!filtrosVisible;
+  document.getElementById('filtros-body').style.display=filtrosVisible?'block':'none';
+  document.getElementById('filtros-icon').textContent=filtrosVisible?'▲ ocultar':'▼ mostrar';
+}
+
+function renderFiltros(){
+  const el=document.getElementById('filtros-content'); if(!el) return;
+  if(!S.zonas||!S.zonas.length){ el.innerHTML='<span style="color:var(--text3)">Completa el onboarding para ver los filtros sugeridos.</span>'; return; }
+  const zonaNames=S.zonas.slice(0,3).map(z=>z.nombre+' ('+z.ciudad+')').join(', ');
+  const habs=S.tipos.includes('habitaciones')?'3+':'2+';
+  const estado=S.tipos.includes('flipping')?'A reformar (para comprar barato)':'Cualquiera';
+  const extras=S.tipos.includes('airbnb')?'Exterior, terraza, aire acondicionado':'Exterior, ascensor';
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;">
+      <div><strong style="color:var(--text)">Operación:</strong> Venta</div>
+      <div><strong style="color:var(--text)">Precio máximo:</strong> ${fmt(S.capMax)} €</div>
+      <div style="grid-column:1/-1"><strong style="color:var(--text)">Zonas:</strong> ${zonaNames}</div>
+      <div><strong style="color:var(--text)">Habitaciones:</strong> ${habs}</div>
+      <div><strong style="color:var(--text)">Estado:</strong> ${estado}</div>
+      <div style="grid-column:1/-1"><strong style="color:var(--text)">Extras recomendados:</strong> ${extras}</div>
+    </div>`;
+}
+
+// ===== RENDER =====
+function fmt(n){return Math.round(n).toLocaleString('es-ES');}
+function fmtD(n){return (+n).toFixed(1);}
+function sc(s){return s>=70?'var(--green)':s>=45?'var(--blue)':'var(--red)';}
+function sb(s){return s>=70?'var(--green-mid)':s>=45?'#378ADD':'#E24B4A';}
+
+function renderPisos(){
+  const el=document.getElementById('pisos-list'); if(!el) return;
+  if(!pisos.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">🏠</div><div class="empty-title">Sin pisos añadidos aún</div><div>Rellena el formulario con los datos de un inmueble de Idealista.</div></div>`;
+    return;
   }
-
-  function deletePiso(id) {
-    if (!confirm('¿Eliminar este piso?')) return;
-    pisos = pisos.filter(p => p.id !== id);
-    saveData();
-    renderPisos();
-  }
-
-  // ===== RENDER =====
-  function fmt(n) { return Math.round(n).toLocaleString('es-ES'); }
-  function fmtD(n) { return (+n).toFixed(1); }
-  function scoreColor(s) { return s >= 70 ? 'var(--green)' : s >= 45 ? 'var(--blue)' : 'var(--red)'; }
-  function scoreBar(s) { return s >= 70 ? 'var(--green-mid)' : s >= 45 ? '#378ADD' : '#E24B4A'; }
-
-  function renderPisos() {
-    const el = document.getElementById('pisos-list');
-    if (!pisos.length) {
-      el.innerHTML = `<div class="empty"><div class="empty-icon">🏠</div><div class="empty-title">Aún no has añadido ningún piso</div><div>Usa la URL de Idealista o rellena el formulario manualmente.</div></div>`;
-      renderRanking(); return;
-    }
-    el.innerHTML = pisos.map(p => {
-      const c = calcularPiso(p);
-      const badge = c.score >= 70 ? '<span class="badge badge-green">Buena inversión</span>' : c.score >= 45 ? '<span class="badge badge-amber">Interesante</span>' : '<span class="badge badge-red">Revisar</span>';
-      return `<div class="piso-card">
-        <div class="piso-header">
-          <div>
-            <div class="piso-name">${p.nombre}${badge}</div>
-            <div class="piso-sub">${p.zona || ''} · ${p.habs} hab · ${p.metros} m² · ${fmt(p.precio / p.metros)} €/m²</div>
-          </div>
+  el.innerHTML=pisos.map(p=>{
+    const c=calcularPiso(p);
+    const badge=c.score>=70?'<span class="badge badge-green">Buena inversión</span>':c.score>=45?'<span class="badge badge-amber">Interesante</span>':'<span class="badge badge-red">Revisar</span>';
+    const feats=buildFeatures(p);
+    return`<div class="piso-card">
+      <div class="piso-header">
+        <div>
+          <div class="piso-name">${p.nombre}${badge}</div>
+          <div class="piso-sub">${p.zona||''} · ${p.habs} hab · ${p.m2u||p.m2c} m² útiles · ${fmt(p.precio/(p.m2c||1))} €/m²</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-secondary" style="font-size:12px;padding:5px 12px;" onclick="editPiso(${p.id})">Editar</button>
           <button class="btn btn-danger" onclick="deletePiso(${p.id})">Eliminar</button>
         </div>
-        <div class="metric-grid">
-          <div class="metric"><div class="metric-label">Precio compra</div><div class="metric-value">${fmt(p.precio)} €</div></div>
-          <div class="metric"><div class="metric-label">Inversión total</div><div class="metric-value" style="color:var(--blue)">${fmt(c.inversion)} €</div></div>
-          <div class="metric"><div class="metric-label">Cuota hipoteca</div><div class="metric-value">${fmt(c.cuota)} €/mes</div></div>
-          <div class="metric"><div class="metric-label">Score</div><div class="metric-value" style="color:${scoreColor(c.score)}">${c.score}/100</div></div>
-        </div>
-        <div class="divider"></div>
-        <div class="piso-mini-grid">
-          <div class="piso-mini"><div class="piso-mini-label">Rent. bruta</div><div class="piso-mini-val" style="color:var(--blue)">${fmtD(c.rentBruta)}%</div></div>
-          <div class="piso-mini"><div class="piso-mini-label">Rent. neta</div><div class="piso-mini-val" style="color:var(--blue)">${fmtD(c.rentNeta)}%</div></div>
-          <div class="piso-mini"><div class="piso-mini-label">Cashflow/mes</div><div class="piso-mini-val" style="color:${c.cashflow > 0 ? 'var(--green)' : 'var(--red)'}">${fmt(c.cashflow)} €</div></div>
-          <div class="piso-mini"><div class="piso-mini-label">YOC (sobre entrada)</div><div class="piso-mini-val" style="color:var(--blue)">${fmtD(c.yoc)}%</div></div>
-          <div class="piso-mini"><div class="piso-mini-label">Payback alquiler</div><div class="piso-mini-val">${Math.round(c.payback)} años</div></div>
-          <div class="piso-mini"><div class="piso-mini-label">Revalor. anual est.</div><div class="piso-mini-val" style="color:var(--green)">+${fmt(c.revalAnual)} €</div></div>
-        </div>
-        ${p.url ? `<div style="margin-top:1rem"><a href="${p.url}" target="_blank" style="font-size:13px;color:var(--blue)">Ver en Idealista →</a></div>` : ''}
-      </div>`;
-    }).join('');
-    renderRanking();
-  }
-
-  function renderRanking() {
-    const el = document.getElementById('ranking-content');
-    if (!pisos.length) {
-      el.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Sin pisos para rankear</div><div>Añade pisos en la pestaña "Mis pisos" para ver el ranking.</div></div>`;
-      return;
-    }
-    const ranked = [...pisos].map(p => ({ ...p, calc: calcularPiso(p) })).sort((a,b) => b.calc.score - a.calc.score);
-    const best = ranked[0], bC = best.calc;
-    el.innerHTML = `
-      <div class="metric-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:1.5rem">
-        <div class="metric"><div class="metric-label">Pisos analizados</div><div class="metric-value">${pisos.length}</div></div>
-        <div class="metric"><div class="metric-label">Mejor opción</div><div class="metric-value" style="font-size:16px;color:var(--green)">${best.nombre}</div></div>
       </div>
-      <div class="card">
-        <div class="card-title">Ranking por score de inversión</div>
-        ${ranked.map((p,i) => {
-          const c = p.calc;
-          return `<div class="ranking-item">
-            <div class="rank-num ${i===0?'gold':i===1?'silver':''}">${i+1}</div>
-            <div class="rank-info">
-              <div class="rank-name">${p.nombre}</div>
-              <div class="rank-sub">${p.zona||''} · Renta neta ${fmtD(c.rentNeta)}% · Cashflow ${fmt(c.cashflow)} €/mes</div>
-            </div>
-            <div class="score-wrap">
-              <div class="score-num" style="color:${scoreColor(c.score)}">${c.score}/100</div>
-              <div class="score-bar-bg"><div class="score-bar" style="width:${c.score}%;background:${scoreBar(c.score)}"></div></div>
-            </div>
-          </div>`;
-        }).join('')}
+      <div class="piso-features">${feats.map(f=>`<span class="feat-tag ${f.pos?'positive':'negative'}">${f.label}</span>`).join('')}</div>
+      <div class="alquiler-est">
+        <span class="alquiler-est-label">Alquiler estimado de mercado</span>
+        <span class="alquiler-est-val">${fmt(p.alquiler)} €/mes</span>
       </div>
-      <div class="card">
-        <div class="card-title">Detalle del mejor piso: ${best.nombre}</div>
-        <div class="piso-mini-grid" style="margin-bottom:1rem">
-          <div class="piso-mini"><div class="piso-mini-label">Inversión necesaria</div><div class="piso-mini-val">${fmt(bC.inversion)} €</div></div>
-          <div class="piso-mini"><div class="piso-mini-label">Rent. bruta</div><div class="piso-mini-val" style="color:var(--blue)">${fmtD(bC.rentBruta)}%</div></div>
-          <div class="piso-mini"><div class="piso-mini-label">Rent. neta</div><div class="piso-mini-val" style="color:var(--blue)">${fmtD(bC.rentNeta)}%</div></div>
-          <div class="piso-mini"><div class="piso-mini-label">Cashflow/mes</div><div class="piso-mini-val" style="color:${bC.cashflow>0?'var(--green)':'var(--red)'}">${fmt(bC.cashflow)} €</div></div>
-          <div class="piso-mini"><div class="piso-mini-label">Cuota hipoteca</div><div class="piso-mini-val">${fmt(bC.cuota)} €/mes</div></div>
-          <div class="piso-mini"><div class="piso-mini-label">Revalor. anual</div><div class="piso-mini-val" style="color:var(--green)">+${fmt(bC.revalAnual)} €</div></div>
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Precio</div><div class="metric-value">${fmt(p.precio)} €</div></div>
+        <div class="metric"><div class="metric-label">Inversión total</div><div class="metric-value" style="color:var(--blue)">${fmt(c.inversion)} €</div></div>
+        <div class="metric"><div class="metric-label">Cuota hipoteca</div><div class="metric-value">${fmt(c.cuota)} €/mes</div></div>
+        <div class="metric"><div class="metric-label">Score</div><div class="metric-value" style="color:${sc(c.score)}">${c.score}/100</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="mini-grid">
+        <div class="mini"><div class="mini-label">Rent. bruta</div><div class="mini-val" style="color:var(--blue)">${fmtD(c.rentBruta)}%</div></div>
+        <div class="mini"><div class="mini-label">Rent. neta</div><div class="mini-val" style="color:var(--blue)">${fmtD(c.rentNeta)}%</div></div>
+        <div class="mini"><div class="mini-label">Cashflow/mes</div><div class="mini-val" style="color:${c.cashflow>0?'var(--green)':'var(--red)'}">${fmt(c.cashflow)} €</div></div>
+        <div class="mini"><div class="mini-label">YOC sobre entrada</div><div class="mini-val" style="color:var(--blue)">${fmtD(c.yoc)}%</div></div>
+        <div class="mini"><div class="mini-label">Payback</div><div class="mini-val">${Math.round(c.payback)} años</div></div>
+        <div class="mini"><div class="mini-label">Revalor. anual</div><div class="mini-val" style="color:var(--green)">+${fmt(c.revalAnual)} €</div></div>
+      </div>
+      ${p.url?`<div style="margin-top:.875rem"><a href="${p.url}" target="_blank" style="font-size:13px;color:var(--blue)">Ver en Idealista →</a></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderRanking(){
+  const el=document.getElementById('ranking-content'); if(!el) return;
+  if(!pisos.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Sin pisos para rankear</div></div>`;return;}
+  const ranked=[...pisos].map(p=>({...p,calc:calcularPiso(p)})).sort((a,b)=>b.calc.score-a.calc.score);
+  const best=ranked[0],bC=best.calc;
+  el.innerHTML=`
+    <div class="metric-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:1.5rem">
+      <div class="metric"><div class="metric-label">Pisos analizados</div><div class="metric-value">${pisos.length}</div></div>
+      <div class="metric"><div class="metric-label">Mejor opción</div><div class="metric-value" style="font-size:15px;color:var(--green)">${best.nombre}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Ranking (score adaptado a tu perfil inversor)</div>
+      ${ranked.map((p,i)=>{const c=p.calc;return`<div class="ranking-item">
+        <div class="rank-num ${i===0?'gold':''}">${i+1}</div>
+        <div class="rank-info">
+          <div class="rank-name">${p.nombre}</div>
+          <div class="rank-sub">${p.zona||''} · Renta neta ${fmtD(c.rentNeta)}% · Cashflow ${fmt(c.cashflow)} €/mes · Alquiler ${fmt(p.alquiler)} €/mes</div>
         </div>
-        ${best.url ? `<a href="${best.url}" target="_blank" class="btn btn-secondary" style="display:inline-block;text-decoration:none;font-size:13px">Ver en Idealista →</a>` : ''}
-      </div>`;
-  }
+        <div class="score-wrap">
+          <div class="score-num" style="color:${sc(c.score)}">${c.score}/100</div>
+          <div class="score-bar-bg"><div class="score-bar" style="width:${c.score}%;background:${sb(c.score)}"></div></div>
+        </div>
+      </div>`;}).join('')}
+    </div>
+    <div class="card">
+      <div class="card-title">Detalle: ${best.nombre}</div>
+      <div class="mini-grid" style="margin-bottom:1rem">
+        <div class="mini"><div class="mini-label">Inversión total</div><div class="mini-val">${fmt(bC.inversion)} €</div></div>
+        <div class="mini"><div class="mini-label">Rent. bruta</div><div class="mini-val" style="color:var(--blue)">${fmtD(bC.rentBruta)}%</div></div>
+        <div class="mini"><div class="mini-label">Rent. neta</div><div class="mini-val" style="color:var(--blue)">${fmtD(bC.rentNeta)}%</div></div>
+        <div class="mini"><div class="mini-label">Cashflow/mes</div><div class="mini-val" style="color:${bC.cashflow>0?'var(--green)':'var(--red)'}">${fmt(bC.cashflow)} €</div></div>
+        <div class="mini"><div class="mini-label">Cuota hipoteca</div><div class="mini-val">${fmt(bC.cuota)} €/mes</div></div>
+        <div class="mini"><div class="mini-label">Revalor. anual</div><div class="mini-val" style="color:var(--green)">+${fmt(bC.revalAnual)} €</div></div>
+      </div>
+      ${best.url?`<a href="${best.url}" target="_blank" class="btn btn-secondary" style="display:inline-block;text-decoration:none;font-size:13px">Ver en Idealista →</a>`:''}
+    </div>`;
+}
 
-  function switchTab(tab) {
-    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['perfil','pisos','ranking','config'][i] === tab));
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById('tab-' + tab).classList.add('active');
-    if (tab === 'ranking') renderRanking();
-  }
-
-  // ===== INIT =====
-  loadData();
-  renderPisos();
+loadAll();
 </script>
 </body>
 </html>
